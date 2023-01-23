@@ -12,9 +12,9 @@ Open the serial REPL with screen or mpremote:
 ```
 gps = g4ngps(2, 115200)
 ## initialize the ESP32 RTC with the time from G4NGPS
-g4ngps.setrtc()
+gps.setrtc()
 ## show the RTC datetime value
 machine.RTC().datetime()
 ## issue a QSYSINF comand
-g4ngps.qsysinf()
+gps.qsysinf()
 ```
