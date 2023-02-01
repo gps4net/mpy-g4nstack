@@ -645,13 +645,13 @@ class g4ngps:
 			res =res[7:-2]
 			qsysppm={
 				'fp_hour1': res[:2].decode() +":"+res[2:4].decode(),
-				'fp_hour2': res[4:6].decode() +":"+res[6:8].decode(),
-				'fp_hour3': res[8:10].decode() +":"+res[10:12].decode(),
-				'fp_hour4': res[12:14].decode() +":"+res[14:16].decode(),
-				'fp_hour5': res[16:18].decode() +":"+res[18:20].decode(),
-				'fp_hour6': res[20:22].decode() +":"+res[22:24].decode(),
-				'fp_hour7': res[24:26].decode() +":"+res[26:28].decode(),
-				'fp_hour8': res[28:30].decode() +":"+res[30:32].decode(),
+				'tr_hour2': res[4:6].decode() +":"+res[6:8].decode(),
+				'tr_hour3': res[8:10].decode() +":"+res[10:12].decode(),
+				'tr_hour4': res[12:14].decode() +":"+res[14:16].decode(),
+				'tr_hour5': res[16:18].decode() +":"+res[18:20].decode(),
+				'tr_hour6': res[20:22].decode() +":"+res[22:24].decode(),
+				'tr_hour7': res[24:26].decode() +":"+res[26:28].decode(),
+				'tr_hour8': res[28:30].decode() +":"+res[30:32].decode(),
 				'fp_hour9': res[32:34].decode() +":"+res[34:36].decode(),
 				'fp_hour10': res[36:38].decode() +":"+res[38:40].decode(),
 				'fp_hour11': res[40:42].decode() +":"+res[42:44].decode(),
@@ -919,9 +919,384 @@ class g4ngps:
 			}
 		return almatd
 
+#Transmission system
+	#transmission on local network
+	def qtrshst(self):
+		self.uart.write("QTRSHST//")
+		time.sleep_ms(100)
+		if self.uart.any():
+			res = self.uart.read()
+			print(res)
+			res=int(res[7:-2],16)
+			trshst={
+				"transmission": (res & 0x80000000 == 0),
+				"interval_a_transmission": (res & 0x40000000 != 0),
+				"interval_a_when_contact_on_transmission": (res & 0x20000000 != 0),
+				"interval_a_when_contact_off_transmission": (res & 0x10000000 != 0),
+				"interval_a_when_alarms_set_transmission": (res & 0x08000000 != 0),
+				"interval_b_transmission": (res & 0x04000000 != 0),
+				"interval_b_when_contact_on_transmission": (res & 0x02000000 != 0),
+				"interval_b_when_contact_off_transmission": (res & 0x01000000 != 0),
+				"interval_b_when_alarms_set_transmission": (res & 0x00800000 != 0),
+				"alarm_transmission": (res & 0x00400000 != 0),
+				"accumulated_data_transmission": (res & 0x00200000 != 0),
+				"contact_transmission": (res & 0x00100000 != 0),
+				"hour_match_transmission": (res & 0x00080000 != 0),
+				"i_button_group_transmission": (res & 0x00040000 != 0),
+				"daily_excessive_traffic": (res & 0x00020000 != 0),
+				"monthly_excessive_traffic": (res & 0x00010000 != 0),
+				"gps_valid_transmission": (res & 0x00008000 != 0),
+				"trans_after_power_on": (res & 0x00004000 != 0),
+				"delay_transmission": (res & 0x00002000 != 0),
+				"clear_transmission": (res & 0x00001000 != 0),
+				"trans_change_work_private": (res & 0x00000800 != 0),
+				"epoch_interval_a_contact_on": (res & 0x00000400 != 0),
+				"epoch_interval_a_contact_off": (res & 0x00000200 != 0),
+				"epoch_interval_b_contact_on": (res & 0x00000100 != 0),
+				"epoch_interval_b_contact_off": (res & 0x00000080 != 0),
+				"epoch_enabled": (
+					(res & 0x00000400) != 0 or (res & 0x00000200) != 0 or
+					(res & 0x00000100) != 0 or (res & 0x00000080) != 0),
+				"cumulative_distance": (res & 0x00000040 != 0),
+				"allow_trans_gen_acq_engine": (res & 0x00000020 != 0),
+				"transmit_rtc": (res & 0x00000010)
+			}
+		return trshst
+
+	#transmission on roaming network
+	def qtrsrst(self):
+		self.uart.write("QTRSRST//")
+		time.sleep_ms(100)
+		if self.uart.any():
+			res = self.uart.read()
+			print(res)
+			res=int(res[7:-2],16)
+			trsrst={
+				"transmission": (res & 0x80000000 == 0),
+				"interval_a_transmission": (res & 0x40000000 != 0),
+				"interval_a_when_contact_on_transmission": (res & 0x20000000 != 0),
+				"interval_a_when_contact_off_transmission": (res & 0x10000000 != 0),
+				"interval_a_when_alarms_set_transmission": (res & 0x08000000 != 0),
+				"interval_b_transmission": (res & 0x04000000 != 0),
+				"interval_b_when_contact_on_transmission": (res & 0x02000000 != 0),
+				"interval_b_when_contact_off_transmission": (res & 0x01000000 != 0),
+				"interval_b_when_alarms_set_transmission": (res & 0x00800000 != 0),
+				"alarm_transmission": (res & 0x00400000 != 0),
+				"accumulated_data_transmission": (res & 0x00200000 != 0),
+				"contact_transmission": (res & 0x00100000 != 0),
+				"hour_match_transmission": (res & 0x00080000 != 0),
+				"i_button_group_transmission": (res & 0x00040000 != 0),
+				"daily_excessive_traffic": (res & 0x00020000 != 0),
+				"monthly_excessive_traffic": (res & 0x00010000 != 0),
+				"gps_valid_transmission": (res & 0x00008000 != 0),
+				"trans_after_power_on": (res & 0x00004000 != 0),
+				"delay_transmission": (res & 0x00002000 != 0),
+				"clear_transmission": (res & 0x00001000 != 0),
+				"trans_change_work_private": (res & 0x00000800 != 0),
+				"epoch_interval_a_contact_on": (res & 0x00000400 != 0),
+				"epoch_interval_a_contact_off": (res & 0x00000200 != 0),
+				"epoch_interval_b_contact_on": (res & 0x00000100 != 0),
+				"epoch_interval_b_contact_off": (res & 0x00000080 != 0),
+				"epoch_enabled": (
+					(res & 0x00000400) != 0 or (res & 0x00000200) != 0 or
+					(res & 0x00000100) != 0 or (res & 0x00000080) != 0),
+				"cumulative_distance": (res & 0x00000040 != 0),
+				"allow_trans_gen_acq_engine": (res & 0x00000020 != 0),
+				"transmit_rtc": (res & 0x00000010)
+			}
+		return trsrst
+
+	#transmission threshold accumulated data for local network
+	def qtrshad(self):
+		self.uart.write("QTRSHAD//")
+		time.sleep_ms(100)
+		if self.uart.any():
+			res = self.uart.read()
+			print(res)
+			res=int(res[7:-2],16)
+			trshad={
+				"threshold_accumulated_data": ((res & 0xffff) /1024)
+			}
+		return trshad	
+
+	#transmission threshold accumulated data for roaming network
+	def qtrsrad(self):
+		self.uart.write("QTRSRAD//")
+		time.sleep_ms(100)
+		if self.uart.any():
+			res = self.uart.read()
+			print(res)
+			res=int(res[7:-2],16)
+			trsrad={
+				"threshold_accumulated_data": ((res & 0xffff) /1024)
+			}
+		return trsrad	
+
+	#transmission interval a local network  
+	def qtrshia(self):
+		self.uart.write("QTRSHIA//")
+		time.sleep_ms(100)
+		if self.uart.any():
+			res = self.uart.read()
+			print(res)
+			res=int(res[7:-2],16)
+			trshia={
+				"interval_a": res & 0xffff
+			}	
+		return trshia
+
+	#transmission interval a roaming network  
+	def qtrsria(self):
+		self.uart.write("QTRSRIA//")
+		time.sleep_ms(100)
+		if self.uart.any():
+			res = self.uart.read()
+			print(res)
+			res=int(res[7:-2],16)
+			trsria={
+				"interval_a": res & 0xffff
+			}	
+		return trsria
+
+	#transmission interval b local network  
+	def qtrshib(self):
+		self.uart.write("QTRSHIB//")
+		time.sleep_ms(100)
+		if self.uart.any():
+			res = self.uart.read()
+			print(res)
+			res=int(res[7:-2],16)
+			trshib={
+				"interval_b": res & 0xffff
+			}	
+		return trshib
+
+	#transmission interval b roaming net
+	def qtrsrib(self):
+		self.uart.write("QTRSRIB//")
+		time.sleep_ms(100)
+		if self.uart.any():
+			res = self.uart.read()
+			print(res)
+			res=int(res[7:-2],16)
+			trsrib={
+				"interval_b": res & 0xffff
+			}	
+		return trsrib
+
+	#transmission hours roam net
+	def qtrsrmt(self):
+		self.uart.write("QTRSRMT//")
+		time.sleep_ms(100)
+		if self.uart.any():
+			res = self.uart.read()
+			print(res)
+			res=res[7:-2]
+			trsrmt={
+				'tr_hour1': res[:2].decode() +":"+res[2:4].decode(),
+				'tr_hour2': res[6:8].decode() +":"+res[8:10].decode(),
+				'tr_hour3': res[12:14].decode() +":"+res[14:16].decode(),
+				'tr_hour4': res[18:20].decode() +":"+res[20:22].decode(),
+				'tr_hour5': res[24:26].decode() +":"+res[26:28].decode(),
+				'tr_hour6': res[30:32].decode() +":"+res[32:34].decode(),
+				'tr_hour7': res[36:38].decode() +":"+res[38:40].decode(),
+				'tr_hour8': res[42:44].decode() +":"+res[44:46].decode(),
+			}
+			for i in range(1, 9):
+				key = 'tr_hour' + str(i)
+				if trsrmt[key] == "99:99":
+					trsrmt[key] = None
+		return trsrmt
+
+	#transmission hours local net
+	def qtrshmt(self):
+		self.uart.write("QTRSHMT//")
+		time.sleep_ms(100)
+		if self.uart.any():
+			res = self.uart.read()
+			print(res)
+			res=res[7:-2]
+			trshmt={
+				'tr_hour1': res[:2].decode() +":"+res[2:4].decode(),
+				'tr_hour2': res[6:8].decode() +":"+res[8:10].decode(),
+				'tr_hour3': res[12:14].decode() +":"+res[14:16].decode(),
+				'tr_hour4': res[18:20].decode() +":"+res[20:22].decode(),
+				'tr_hour5': res[24:26].decode() +":"+res[26:28].decode(),
+				'tr_hour6': res[30:32].decode() +":"+res[32:34].decode(),
+				'tr_hour7': res[36:38].decode() +":"+res[38:40].decode(),
+				'tr_hour8': res[42:44].decode() +":"+res[44:46].decode(),
+			}
+			for i in range(1, 9):
+				key = 'tr_hour' + str(i)
+				if trshmt[key] == "99:99":
+					trshmt[key] = None
+		return trshmt		
+
+	#transmission daily traffic ext sim ln
+	def qtrshdl(self):
+		self.uart.write("QTRSHDL//")
+		time.sleep_ms(100)
+		if self.uart.any():	
+			res = self.uart.read()
+			print(res)
+			res=int(res[7:-2],16)
+			trshdl={
+				'daily_traffic_limit_extern_sim': (res & 0xffffffff) / 1024
+			}
+		return trshdl
+	#trasnmission daily traffic ext sim roam net
+	def qtrsrdl(self):
+		self.uart.write("QTRSRDL//")
+		time.sleep_ms(100)
+		if self.uart.any():	
+			res = self.uart.read()
+			print(res)
+			res=int(res[7:-2],16)
+			trsrdl={
+				'daily_traffic_limit_extern_sim': (res & 0xffffffff) / 1024
+			}
+		return trsrdl	
+
+	#transmission daily traffic int sim ln
+	def qtrshdc(self):
+		self.uart.write("QTRSHDC//")
+		time.sleep_ms(100)
+		if self.uart.any():	
+			res = self.uart.read()
+			print(res)
+			res=int(res[7:-2],16)
+			trshdc={
+				'daily_traffic_limit_int_sim': (res & 0xffffffff) / 1024
+			}
+		return trshdc
+	#trasnmission daily traffic int sim rn
+	def qtrsrdc(self):
+		self.uart.write("QTRSRDC//")
+		time.sleep_ms(100)
+		if self.uart.any():	
+			res = self.uart.read()
+			print(res)
+			res=int(res[7:-2],16)
+			trsrdc={
+				'daily_traffic_limit_int_sim': (res & 0xffffffff) / 1024
+			}
+		return trsrdc
+
+	#transmission month traffic ext sim local network
+	def qtrshml(self):
+		self.uart.write("QTRSHML//")
+		time.sleep_ms(100)
+		if self.uart.any():	
+			res = self.uart.read()
+			print(res)
+			res=int(res[7:-2],16)
+			trshml={
+				'monthly_traffic_limit_extern_sim': (res & 0xffffffff) / 1048576
+			}
+		return trshml
+	#trasnmission month traffic ext sim roaming network
+	def qtrsrml(self):
+		self.uart.write("QTRSRML//")
+		time.sleep_ms(100)
+		if self.uart.any():	
+			res = self.uart.read()
+			print(res)
+			res=int(res[7:-2],16)
+			trsrml={
+				'monthly_traffic_limit_extern_sim': (res & 0xffffffff) / 1048576
+			}
+		return trsrml	
 
 
+	#transmission month traffic int sim local network
+	def qtrshmc(self):
+		self.uart.write("QTRSHMC//")
+		time.sleep_ms(100)
+		if self.uart.any():	
+			res = self.uart.read()
+			print(res)
+			res=int(res[7:-2],16)
+			trshmc={
+				'monthly_traffic_limit_int_sim': (res & 0xffffffff) / 1048576
+			}
+		return trshmc
+	#trasnmission month traffic int sim roaming network
+	def qtrsrmc(self):
+		self.uart.write("QTRSRMC//")
+		time.sleep_ms(100)
+		if self.uart.any():	
+			res = self.uart.read()
+			print(res)
+			res=int(res[7:-2],16)
+			trsrmc={
+				'monthly_traffic_limit_int_sim': (res & 0xffffffff) / 1048576
+			}
+		return trsrmc		
 
+	#transmission day of mothly traffic reset
+	def qtrstdr(self):
+		self.uart.write("QTRSTDR//")
+		time.sleep_ms(100)
+		if self.uart.any():	
+			res = self.uart.read()
+			print(res)
+			res=int(res[7:-2],16)
+			trstdr={
+				'day_of_monthly_traffic_reset': (res & 0xff) 
+			}
+			if trstdr['day_of_monthly_traffic_reset'] >= 31:
+				trstdr["day_of_monthly_traffic_reset"] = None
+		return trstdr
+
+	#delay transmision in seconds on local network
+	def qtrshdt(self):
+		self.uart.write("QTRSHDT//")		
+		time.sleep_ms(100)
+		if self.uart.any():	
+			res = self.uart.read()
+			print(res)
+			res=int(res[7:-2],16)
+			trshdt={
+				'delay_transmission_seconds' : res
+			}
+		return trshdt
+	#delay transmision in seconds on roam network
+	def qtrsrdt(self):
+		self.uart.write("QTRSRDT//")		
+		time.sleep_ms(100)
+		if self.uart.any():	
+			res = self.uart.read()
+			print(res)
+			res=int(res[7:-2],16)
+			trsrdt={
+				'delay_transmission_seconds' : res
+			}
+		return trsrdt
+
+	#transmission at cumulative distance on local network
+	def qtrshtd(self):
+		self.uart.write("QTRSHTD//")
+		time.sleep_ms(100)
+		if self.uart.any():
+			res = self.uart.read()
+			print(res)
+			res=int(res[7:-2],16)
+			trshtd={
+				'cumulative_distance_transmission' : res /1000
+			}
+		return trshtd
+	#transmission at cumulative distance on roaming network
+	def qtrsrtd(self):
+		self.uart.write("QTRSRTD//")
+		time.sleep_ms(100)
+		if self.uart.any():
+			res = self.uart.read()
+			print(res)
+			res=int(res[7:-2],16)
+			trshtd={
+				'cumulative_distance_transmission' : res /1000
+			}
+		return trshtd
 
 #IO system
 	# Volt threshold work-private
@@ -941,6 +1316,8 @@ class g4ngps:
 			}
 		return diowpt
 
+
+#GSM system
 
 
 
