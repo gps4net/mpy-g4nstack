@@ -786,7 +786,140 @@ class g4ngps:
 				"accelerometer_antitheft_alarm": (res & 0x00000008 != 0),
 				"downtime_alarm": (res & 0x00000004 != 0)
 			}
-		return almrst		
+		return almrst	
+
+#Alarm system overspeed speed threashold
+	def qalmovs(self):
+		self.uart.write("QALMOVS//")
+		time.sleep_ms(100)
+		if self.uart.any():
+			res = self.uart.read()
+			print(res)
+			res=int(res[7:-2],16)
+			almovs={
+				'overspeed_threshold':(res  & 0xffff) / 10
+			}
+		return almovs
+
+	#Alarm system movement treshold
+	def qalmovs(self):
+		self.uart.write("QALMMOV//")
+		time.sleep_ms(100)
+		if self.uart.any():
+			res = self.uart.read()
+			print(res)
+			res=int(res[7:-2],16)
+			almmov={
+				'movement_threshold':(res  & 0xffff) / 10
+			}
+		return almmov
+
+	#Alarm system stationary timer contact on
+	def qalmstn(self):
+		self.uart.write("QALMSTN//")
+		time.sleep_ms(100)
+		if self.uart.any():
+			res = self.uart.read()
+			print(res)
+			res=int(res[7:-2],16)
+			almstn={
+				'stationary_timer_contact_on':(res  & 0xffff)
+			}
+		return almstn
+
+	#Alarm system stationary timer contact on
+	def qalmstf(self):
+		self.uart.write("QALMSTF//")
+		time.sleep_ms(100)
+		if self.uart.any():
+			res = self.uart.read()
+			print(res)
+			res=int(res[7:-2],16)
+			almstf={
+				'stationary_timer_contact_off':(res  & 0xffff)
+			}
+		return almstf
+
+	#Alarm system speed threshold contact on
+	def qalmssn(self):
+		self.uart.write("QALMSSN//")
+		time.sleep_ms(100)
+		if self.uart.any():
+			res = self.uart.read()
+			print(res)
+			res=int(res[7:-2],16)
+			almssn={
+				'speed_threshold_contact_on':(res  & 0xffff) / 10
+			}
+		return almssn	
+
+	#Alarm system speed threshold contact off
+	def qalmssf(self):
+		self.uart.write("QALMSSF//")
+		time.sleep_ms(100)
+		if self.uart.any():
+			res = self.uart.read()
+			print(res)
+			res=int(res[7:-2],16)
+			almssf={
+				'speed_threshold_contact_off':(res  & 0xffff) / 10
+			}
+		return almssf		
+
+	#Alarm system  missing gps treshold
+	def qalmgmt(self):
+		self.uart.write("QALMGMT//")
+		time.sleep_ms(100)
+		if self.uart.any():
+			res = self.uart.read()
+			print(res)
+			res=int(res[7:-2],16)
+			almgmt={
+				'gps_missing_threshold':(res  & 0xffff)
+			}
+		return almgmt
+
+	#Alarm system down time timer
+	def qalmdta(self):
+		self.uart.write("QALMDTA//")
+		time.sleep_ms(100)
+		if self.uart.any():
+			res = self.uart.read()
+			print(res)
+			res=int(res[7:-2],16)
+			almdta={
+				'down_time_timer':(res  & 0xffff)
+			}
+		return almdta
+
+
+ 	#Alarm system data flash limit
+	def qalmdfl(self):
+		self.uart.write("QALMDFL//")
+		time.sleep_ms(100)
+		if self.uart.any():
+			res = self.uart.read()
+			print(res)
+			res=int(res[7:-2],16)
+			almdfl={
+				'data_flash_limit':(res  & 0xffff)
+			}
+		return almdfl
+
+	#Alarm system delay accelerometer movement threhold
+	def qalmatd(self):
+		self.uart.write("QALMDFL//")
+		time.sleep_ms(100)
+		if self.uart.any():
+			res = self.uart.read()
+			print(res)
+			res=int(res[7:-2],16)
+			almatd={
+				'delay_acc_movement':(res  & 0xffff)
+			}
+		return almatd
+
+
 
 
 
