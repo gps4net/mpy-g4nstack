@@ -6,6 +6,14 @@ class g4ngps:
 		self.uart = machine.UART(port, speed)
 		self.uart.init(speed, bits=8, parity=None, stop=1)
 
+	def execute_command(self,command):
+		self.uart.write(command)
+		time.sleep_ms(100)
+		if self.uart.any():
+			res = self.uart.read()
+			print(res)
+			return res
+
 	def qsysinf(self):
 		self.uart.write('QSYSINF//')
 		time.sleep_ms(100)
@@ -16,7 +24,7 @@ class g4ngps:
 				'hhmmss': res[15:21],
 				'ddmmyyyy': res[23:31],
 				'syncage': struct.unpack("<I", binascii.unhexlify(res[31:39]))[0],
-				'psn': res[39:47].decode,
+				'psn': res[39:47].decode(),
 				'hwcode': res[47:49],
 				'bootver': res[49:51],
 				'swv': res[51:53],
@@ -92,131 +100,105 @@ class g4ngps:
 
 #auto-complete parameters commands
 	def qacivin(self):
-		self.uart.write("QACIVIN//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			acivin={
-				'vin': res[7:-2].decode()
-			}
+		c = "QACIVIN//"
+		res = g4ngps.execute_command(self,c)
+		acivin={
+			'vin': res[7:-2].decode()
+		}
 		return acivin
 
 	def qacivrn(self):
-		self.uart.write("QACIVRN//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			acivrn={
-				'vrn': res[7:-2].decode()
-			}
+		c = "QACIVRN//"
+		res = g4ngps.execute_command(self,c)
+		acivrn={
+			'vrn': res[7:-2].decode()
+		}
 		return acivrn	
 
 	def qacikfa(self):
-		self.uart.write("QACIKFA//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			acikfa={
-				'k_factor': int(res[7:-2],16)
-			}
+		c= "QACIKFA//"
+		res = g4ngps.execute_command(self,c)
+		acikfa={
+			'k_factor': int(res[7:-2],16)
+		}
 		return acikfa
 
 	def qaciepd(self):
-		self.uart.write("QACIEPD//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			aciepd={
-				'drift_epoch': int(res[7:-2],16)
-			}
+		c= "QACIEPD//"
+		res = g4ngps.execute_command(self,c)
+		aciepd={
+			'drift_epoch': int(res[7:-2],16)
+		}
 		return aciepd
 
 	def qacioeo(self):
-		self.uart.write("QACIOEO//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			acieoe={
-				'engine_on_time': int(res[7:-2],16)
-			}
+		c= "QACIOEO//"
+		res = g4ngps.execute_command(self,c)
+		acieoe={
+			'engine_on_time': int(res[7:-2],16)
+		}
 		return acieoe
 
 	def qaciote(self):
-		self.uart.write("QACIOTE//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			aciete={
-				'engine_on_time': int(res[7:-2],16)
-			}
+		c= "QACIOTE//"
+		res = g4ngps.execute_command(self,c)
+		aciete={
+			'engine_on_time': int(res[7:-2],16)
+		}
 		return aciete	
 #end auto-complete parameters
 
 #main system
 	def qsyssts(self):
-			self.uart.write("QSYSSTS//")
-			time.sleep_ms(100)
-			if self.uart.any():
-				res = self.uart.read()
-				syssts={
-					'speed_threshold': int(res[7:-2],16)
-				}
-			return syssts
+		c= "QSYSSTS//"
+		res = g4ngps.execute_command(self,c)
+		syssts={
+			'speed_threshold': int(res[7:-2],16)
+		}
+		return syssts
 
 	def qsysstm(self):
-			self.uart.write("QSYSSTM//")
-			time.sleep_ms(100)
-			if self.uart.any():
-				res = self.uart.read()
-				sysstm={
-					'time_threshold': int(res[7:-2],16)
-				}
-			return sysstm
+		c="QSYSSTM//"
+		res = g4ngps.execute_command(self,c)
+		sysstm={
+			'time_threshold': int(res[7:-2],16)
+		}
+		return sysstm
 	
 	def qsysled(self):
-			self.uart.write("QSYSLED//")
-			time.sleep_ms(100)
-			if self.uart.any():
-				res = self.uart.read()
-				print(res)
-				result_int = int(res[7:-2],16) #hex to int
-
-				sysled={
-					'led': res[7:],
-					'led_can':(result_int & 0x8000 != 0),
-					'led_wp':(result_int & 0x4000 != 0),
-					'led_ignition':(result_int & 0x2000 != 0),
-					'led_alarm':(result_int & 0x1000 != 0),
-					'led_stationary_vehicle':(result_int & 0x0800 != 0),
-					'led_external_serial_traffic':(result_int & 0x0400 !=0),
-					'led_sim_selector':(result_int & 0x0200 != 0),
-					'led_ftp_indicator':(result_int & 0x0100 != 0),
-					'led_acc_antitheft':(result_int & 0x0080 != 0),
-					'led_acc_movement':(result_int & 0x0040 != 0),
-					'led_fuel_sensor':(result_int & 0x0020 != 0),
-					'led_eng_running':(result_int & 0x0010 != 0),
-					'led_ibu_auth':(result_int & 0x0008 != 0),
-					'led_data_mode':(result_int & 0x0004 != 0)
-				}
+			c="QSYSLED//"
+			res = g4ngps.execute_command(self,c)
+			result_int = int(res[7:-2],16) #hex to int
+			sysled={
+				'led': res[7:],
+				'led_can':(result_int & 0x8000 != 0),
+				'led_wp':(result_int & 0x4000 != 0),
+				'led_ignition':(result_int & 0x2000 != 0),
+				'led_alarm':(result_int & 0x1000 != 0),
+				'led_stationary_vehicle':(result_int & 0x0800 != 0),
+				'led_ext_serial_traffic':(result_int & 0x0400 !=0),
+				'led_sim_selector':(result_int & 0x0200 != 0),
+				'led_ftp_indicator':(result_int & 0x0100 != 0),
+				'led_acc_antitheft':(result_int & 0x0080 != 0),
+				'led_acc_movement':(result_int & 0x0040 != 0),
+				'led_fuel_sensor':(result_int & 0x0020 != 0),
+				'led_eng_running':(result_int & 0x0010 != 0),
+				'led_ibu_auth':(result_int & 0x0008 != 0),
+				'led_data_mode':(result_int & 0x0004 != 0)
+			}
 			return sysled
 
 	def qsysrsu(self):
-		self.uart.write("QSYSRSU//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			sysrsu={
-				'auto_reset_threshold': int(res[7:-2],16)
-			}
+		c="QSYSRSU//"
+		res = g4ngps.execute_command(self,c)
+		sysrsu={
+			'auto_reset_threshold': int(res[7:-2],16)
+		}
 		return sysrsu
 
 	def qsysset(self):
-		self.uart.write("QSYSSET//")
-		time.sleep_ms(100)
-		res = b''
-		while not self.uart.any():
-			time.sleep_ms(10)
-		res = self.uart.read()
+		c="QSYSSET//"
+		res = g4ngps.execute_command(self,c)
 		if res:
 			result_int = int(res[7:-2],16)
 			sysset={
@@ -229,75 +211,65 @@ class g4ngps:
 #selectors in main system
 
 	def qsysfus(self):
-		self.uart.write("QSYSFUS//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			sysfus={
-				'total_fuel_selector_id': int(res[7:-2],16)
-			}
+		c="QSYSFUS//"
+		res = g4ngps.execute_command(self,c)
+		sysfus={
+			'total_fuel_selector_id': int(res[7:-2],16)
+		}
 		return sysfus
 
 	def qsysosl(self):
-		self.uart.write("QSYSOSL//")
+		c= "QSYSOSL//"
 		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			sysosl={
-				'odometer_selector_id': int(res[7:-2],16)
-			}
+		res = g4ngps.execute_command(self,c)
+		sysosl={
+			'odometer_selector_id': int(res[7:-2],16)
+		}
 		return sysosl
 
 	def qsysssl(self):
-		self.uart.write("QSYSSSL//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			sysssl={
-				'speed_selector_id': int(res[7:-2],16)
-			}
+		c= "QSYSSSL//"
+		res = g4ngps.execute_command(self,c)
+		sysssl={
+			'speed_selector_id': int(res[7:-2],16)
+		}
 		return sysssl
 
 	def qsystts(self):
-		self.uart.write("QSYSTTS//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			systts={
-				'ignition_selector_id': int(res[7:-2],16)
-			}
+		c= "QSYSTTS//"
+		res = g4ngps.execute_command(self,c)
+		systts={
+			'ignition_selector_id': int(res[7:-2],16)
+		}
 		return systts
 
 #work private system
 	def qsyssym(self):
-		self.uart.write("QSYSSYM//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			result_int = int(res[7:-2],16) #hex to int
-			syssym={
-				'work_private_active':(result_int & 0x8000 == 0),
-				'triggered_by_IO': (result_int & 0x4000 != 0),
-                'triggered_by_IO_negated': (result_int & 0x2000 != 0),
-                'triggered_by_calendar':(result_int & 0x1000 != 0),
-                'no_acq_private':(result_int & 0x0800 != 0),
-                'no_trans_private':(result_int & 0x0400 != 0),
-                'no_alarms_private':(result_int & 0x0200 != 0),
-                'use_reserved_days':(result_int & 0x0100 != 0),
-                'set_private_enable_relay':(result_int & 0x0080 != 0),
-                'set_private_disable_relay':(result_int & 0x0040 != 0),
-                'set_work_enable_relay':(result_int & 0x0020 != 0),
-                'set_Work_disable_relay':(result_int & 0x0010 != 0),
-			}
+		c="QSYSSYM//"
+		res = g4ngps.execute_command(self,c)
+		result_int = int(res[7:-2],16) #hex to int
+		syssym={
+			'work_priv_actv': (result_int & 0x8000 == 0),
+			'trig_by_IO': (result_int & 0x4000 != 0),
+			'trig_by_IO_neg': (result_int & 0x2000 != 0),
+			'trig_by_cal': (result_int & 0x1000 != 0),
+			'no_acq_priv': (result_int & 0x0800 != 0),
+			'no_trans_priv': (result_int & 0x0400 != 0),
+			'no_alarms_priv': (result_int & 0x0200 != 0),
+			'use_res_days': (result_int & 0x0100 != 0),
+			'set_priv_en_relay': (result_int & 0x0080 != 0),
+			'set_priv_dis_relay': (result_int & 0x0040 != 0),
+			'set_work_en_relay': (result_int & 0x0020 != 0),
+			'set_work_dis_relay': (result_int & 0x0010 != 0)
+		}
 		return syssym
 
 	#work private defined by calendar
 	def qsysca0(self):
 		private_intervals = {}
 		for j in range(7):
-			command = "QSYSSCA0" + str(j + 1) + "//"
-			self.uart.write(command)
+			c= "QSYSSCA0" + str(j + 1) + "//"
+			self.uart.write(c)
 			time.sleep_ms(100)
 			if self.uart.any():
 				res = self.uart.read()
@@ -326,8 +298,8 @@ class g4ngps:
 
 	#reserved private days 
 	def qsyswpd(self):
-		command="QSYSWPD//"
-		self.uart.write(command)
+		c="QSYSWPD//"
+		self.uart.write(c)
 		time.sleep_ms(100)
 		if self.uart.any():
 			res = self.uart.read()
@@ -343,8 +315,8 @@ class g4ngps:
 				print("Error: ", e)
 
 	def qsyswpf(self):
-		command="QSYSWPF//"
-		self.uart.write(command)
+		c="QSYSWPF//"
+		self.uart.write(c)
 		time.sleep_ms(100)
 		if self.uart.any():
 			res = self.uart.read()
@@ -356,19 +328,16 @@ class g4ngps:
 
 #system power management 45
 	def qsyspmg(self):
-		self.uart.write("QSYSPMG//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			result_int = int(res[7:-2],16) #hex to int
-			syspmg={
-				'power_management_enabled':(result_int & 0x80000000 == 0),
-				'pmg_leds_off': (result_int & 0x40000000 != 0),
-                'pdn_mode_level': (result_int & 0x20000000 != 0),
-				'pdn_led_indicator' : (result_int & 0x10000000 != 0),
-				'acc_charge_pdn' : (result_int & 0x08000000 != 0),
-			}
+		c= "QSYSPMG//"
+		res = g4ngps.execute_command(self,c)
+		result_int = int(res[7:-2],16) #hex to int
+		syspmg={
+			'power_management_enabled':(result_int & 0x80000000 == 0),
+			'pmg_leds_off': (result_int & 0x40000000 != 0),
+			'pdn_mode_level': (result_int & 0x20000000 != 0),
+			'pdn_led_indicator' : (result_int & 0x10000000 != 0),
+			'acc_charge_pdn' : (result_int & 0x08000000 != 0),
+		}
 		return syspmg
 
 	#power saving wakeup sources
@@ -377,34 +346,31 @@ class g4ngps:
 		# print("Allocated memory at start: ", gc.mem_alloc())
 		# mem_free_start= gc.mem_free()
 		# mem_alloc_start=gc.mem_alloc()
-		self.uart.write("QSYSPMG//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			result_int = int(res[7:-2],16) #hex to int
-			syswku={
-				'wakeup_source_enabled' :(result_int & 0x80000000 == 0),
-    			'wakeup_source_volt_over' :(result_int & 0x40000000 != 0),
-    			'wakeup_source_hour_match' :(result_int & 0x20000000 != 0),
-    			'wakeup_source_calendar' :(result_int & 0x10000000 != 0),
-    			'wakeup_source_acquisition' : (result_int & 0x08000000 != 0),
-    			'wakeup_source_transmission' :(result_int & 0x04000000 != 0),
-    			'wakeup_source_backButton' :(result_int & 0x02000000 != 0),
-    			'wakeup_source_motion_sensor' :(result_int & 0x01000000 != 0),
-    			'wakeup_source_volt_IO1Over' :(result_int & 0x00800000 != 0),
-    			'wakeup_source_volt_IO2Over' :(result_int & 0x00400000 != 0),
-    			'wakeup_source_voltIO3Over' :(result_int & 0x00200000 != 0),
-    			'wakeup_source_voltIO4Over' :(result_int & 0x00100000 != 0),
-    			'wakeup_source_voltIO1Under' :(result_int & 0x00080000 != 0),
-    			'wakeup_source_voltIO2Under' :(result_int & 0x00040000 != 0),
-    			'wakeup_source_voltIO3Under' :(result_int & 0x00020000 != 0),
-    			'wakeup_source_voltIO4Under' :(result_int & 0x00010000 != 0),
-    			'wakeup_source_ignitionOn' :(result_int & 0x00008000 != 0),
-    			'wakeup_source_iButtonPresent' :(result_int & 0x00004000 != 0),
-    			'wakeup_source_mov_acc_antitheft' :(result_int & 0x00002000 != 0),
-    			'wakeup_source_mov_acc_mov': (result_int & 0x00001000 != 0)
-			}
+		c="QSYSPMG//"
+		res = g4ngps.execute_command(self,c)
+		result_int = int(res[7:-2],16) #hex to int
+		syswku={
+			"wakeup_src_en": (result_int & 0x80000000 == 0),
+			"wakeup_src_volt_over": (result_int & 0x40000000 != 0),
+			"wakeup_src_hr_mtch": (result_int & 0x20000000 != 0),
+			"wakeup_src_cal": (result_int & 0x10000000 != 0),
+			"wakeup_src_acq": (result_int & 0x08000000 != 0),
+			"wakeup_src_tx": (result_int & 0x04000000 != 0),
+			"wakeup_src_back_btn": (result_int & 0x02000000 != 0),
+			"wakeup_src_mot_sens": (result_int & 0x01000000 != 0),
+			"wakeup_src_volt_IO1_over": (result_int & 0x00800000 != 0),
+			"wakeup_src_volt_IO2_over": (result_int & 0x00400000 != 0),
+			"wakeup_src_volt_IO3_over": (result_int & 0x00200000 != 0),
+			"wakeup_src_volt_IO4_over": (result_int & 0x00100000 != 0),
+			"wakeup_src_volt_IO1_under": (result_int & 0x00080000 != 0),
+			"wakeup_src_volt_IO2_under": (result_int & 0x00040000 != 0),
+			"wakeup_src_volt_IO3_under": (result_int & 0x00020000 != 0),
+			"wakeup_src_volt_IO4_under": (result_int & 0x00010000 != 0),
+			"wakeup_src_ign_on": (result_int & 0x00008000 != 0),
+			"wakeup_src_i_btn_present": (result_int & 0x00004000 != 0),
+			"wakeup_src_mov_acc_antithft": (result_int & 0x00002000 != 0),
+			"wakeup_src_mov_acc_mov": (result_int & 0x00001000 != 0)
+		}
 
 			# print("Free memory at end: ", gc.mem_free())
 			# print("Allocated memory at end: ", gc.mem_alloc())
@@ -416,30 +382,27 @@ class g4ngps:
 
 	#wake-up hour match
 	def qsyspwm(self):
-		self.uart.write("QSYSPWM//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			res =res[7:-2]
-			qsyspwm={
-				'wk_hour1': res[:2].decode() +":"+res[2:4].decode(),
-				'wk_hour2': res[4:6].decode() +":"+res[6:8].decode(),
-				'wk_hour3': res[8:10].decode() +":"+res[10:12].decode(),
-				'wk_hour4': res[12:14].decode() +":"+res[14:16].decode(),
-				'wk_hour5': res[16:18].decode() +":"+res[18:20].decode(),
-				'wk_hour6': res[20:22].decode() +":"+res[22:24].decode(),
-				'wk_hour7': res[24:26].decode() +":"+res[26:28].decode(),
-				'wk_hour8': res[28:30].decode() +":"+res[30:32].decode(),
-				'wk_hour9': res[32:34].decode() +":"+res[34:36].decode(),
-				'wk_hour10': res[36:38].decode() +":"+res[38:40].decode(),
-				'wk_hour11': res[40:42].decode() +":"+res[42:44].decode(),
-				'wk_hour12': res[44:46].decode() +":"+res[46:48].decode(),
-			}
-			for i in range(1, 13):
-				key = 'wk_hour' + str(i)
-				if qsyspwm[key] == "99:99":
-					qsyspwm[key] = None
+		c="QSYSPWM//"
+		res = g4ngps.execute_command(self,c)
+		res =res[7:-2]
+		qsyspwm={
+			'wk_hour1': res[:2].decode() +":"+res[2:4].decode(),
+			'wk_hour2': res[4:6].decode() +":"+res[6:8].decode(),
+			'wk_hour3': res[8:10].decode() +":"+res[10:12].decode(),
+			'wk_hour4': res[12:14].decode() +":"+res[14:16].decode(),
+			'wk_hour5': res[16:18].decode() +":"+res[18:20].decode(),
+			'wk_hour6': res[20:22].decode() +":"+res[22:24].decode(),
+			'wk_hour7': res[24:26].decode() +":"+res[26:28].decode(),
+			'wk_hour8': res[28:30].decode() +":"+res[30:32].decode(),
+			'wk_hour9': res[32:34].decode() +":"+res[34:36].decode(),
+			'wk_hour10': res[36:38].decode() +":"+res[38:40].decode(),
+			'wk_hour11': res[40:42].decode() +":"+res[42:44].decode(),
+			'wk_hour12': res[44:46].decode() +":"+res[46:48].decode(),
+		}
+		for i in range(1, 13):
+			key = 'wk_hour' + str(i)
+			if qsyspwm[key] == "99:99":
+				qsyspwm[key] = None
 
 		return qsyspwm	
 
@@ -447,8 +410,8 @@ class g4ngps:
 	def qsyswc0(self):
 		wkup_private_intervals = {}
 		for j in range(7):
-			command = "QSYSWKC0" + str(j + 1) + "//"
-			self.uart.write(command)
+			c = "QSYSWKC0" + str(j + 1) + "//"
+			self.uart.write(c)
 			time.sleep_ms(100)
 			if self.uart.any():
 				res = self.uart.read()
@@ -476,573 +439,488 @@ class g4ngps:
 
 	#power management full power
 	def	qsyspmf(self):
-		self.uart.write("QSYSPMF//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-		
-			# result_int = int(res[7:-2],16) #hex to int
-			result_1=int(res[7:-15],16)
-			result_2=int(res[15:-2],16)
-			
-			syspmf={
-				'sby_power_under_volt' : (result_1 & 0x40000000 != 0),
-				'sby_at_hours' : (result_1 & 0x20000000 != 0),
-				'sby_idle' : (result_1 & 0x10000000 != 0),
-				'sby_after_acquisition' : (result_1 & 0x08000000 != 0),
-				'sby_after_transmission' : (result_1 & 0x04000000 != 0),
-				'sby_at_calendar' : (result_1 & 0x02000000 != 0),
-				'sby_when_ignition_off' : (result_1 & 0x01000000 != 0),
-				'sleep_power_under_volt' : (result_2 & 0x40000000 != 0),
-				'sleep_at_hours' : (result_2 & 0x20000000 != 0),
-				'sleep_idle' : (result_2 & 0x10000000 != 0),
-				'sleep_after_acquisition' : (result_2 & 0x08000000 != 0),
-				'sleep_after_transmission' : (result_2 & 0x04000000 != 0),
-				'sleep_at_calendar' : (result_2& 0x02000000 != 0),
-				'sleep_when_ignition_off' : (result_2 & 0x01000000 != 0)
-    
-			}
+		c= "QSYSPMF//"
+		res = g4ngps.execute_command(self,c)
+		# result_int = int(res[7:-2],16) #hex to int
+		result_1=int(res[7:-15],16)
+		result_2=int(res[15:-2],16)
+		syspmf={
+			'sby_power_under_volt' : (result_1 & 0x40000000 != 0),
+			'sby_at_hours' : (result_1 & 0x20000000 != 0),
+			'sby_idle' : (result_1 & 0x10000000 != 0),
+			'sby_after_acquisition' : (result_1 & 0x08000000 != 0),
+			'sby_after_transmission' : (result_1 & 0x04000000 != 0),
+			'sby_at_calendar' : (result_1 & 0x02000000 != 0),
+			'sby_when_ignition_off' : (result_1 & 0x01000000 != 0),
+			'sleep_power_under_volt' : (result_2 & 0x40000000 != 0),
+			'sleep_at_hours' : (result_2 & 0x20000000 != 0),
+			'sleep_idle' : (result_2 & 0x10000000 != 0),
+			'sleep_after_acquisition' : (result_2 & 0x08000000 != 0),
+			'sleep_after_transmission' : (result_2 & 0x04000000 != 0),
+			'sleep_at_calendar' : (result_2& 0x02000000 != 0),
+			'sleep_when_ignition_off' : (result_2 & 0x01000000 != 0)
+		}
 		return syspmf
 
 	#power management standby
 	def	qsyspmy(self):
-		self.uart.write("QSYSPMY//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-
-			syspmy={
-				"fp_power_under_volt": (int(res[7:15],16) & 0x40000000 != 0),
-				"fp_at_hours": (int(res[7:15],16) & 0x20000000 != 0),
-				"fp_at_calendar": (int(res[7:15],16) & 0x10000000 != 0),
-				"fp_for_acquisition": (int(res[7:15],16) & 0x08000000 != 0),
-				"fp_for_transmission": (int(res[7:15], 16) & 0x04000000 != 0),
-				"fp_motion_sensor": (int(res[7:15],16) & 0x01000000 != 0),
-				"fp_over_voltage_ain1": (int(res[7:15],16) & 0x00800000 != 0),
-				"fp_over_voltage_ain2": (int(res[7:15],16) & 0x00400000 != 0),
-				"fp_over_voltage_ain3": (int(res[7:15],16) & 0x00200000 != 0),
-				"fp_under_voltage_ain1": (int(res[7:15],16) & 0x00080000 != 0),
-				"fp_under_voltage_ain2": (int(res[7:15],16) & 0x00040000 != 0),
-				"fp_under_voltage_ain3": (int(res[7:15],16) & 0x00020000 != 0),
-				"fp_ignition_on": (int(res[7:15],16) & 0x00008000 != 0),
-				"fp_i_button_present": (int(res[7:15], 16) & 0x00004000 != 0),
-				"fp_movement_accl_antitheft": (int(res[7:15], 16) & 0x00002000 != 0),
-				"fp_movement_accl_movement_detector": (int(res[7:15],16) & 0x00001000 != 0),
-				"fp_din4_pulled_gnd": (int(res[7:15],16) & 0x00000800 != 0),
-				"fp_din5_pulled_gnd": (int(res[7:15],16) & 0x00000400 != 0),
-				"fp_din6_pulled_gnd": (int(res[7:15],16) & 0x00000200 != 0),
-				"sleep_power_under_volt": (int(res[15:-2],16) & 0x40000000 != 0),
-				"sleep_after_period": (int(res[15:-2],16) & 0x10000000 != 0),
-				"sleep_after_ignition_off": (int(res[15:-2],16) & 0x08000000 != 0)
-			}
+		c= "QSYSPMY//"
+		res = g4ngps.execute_command(self,c)
+		syspmy={
+			"fp_power_under_volt": (int(res[7:15], 16) & 0x40000000 != 0),
+			"fp_at_hours": (int(res[7:15], 16) & 0x20000000 != 0),
+			"fp_at_calendar": (int(res[7:15], 16) & 0x10000000 != 0),
+			"fp_for_acquisition": (int(res[7:15], 16) & 0x08000000 != 0),
+			"fp_for_transmission": (int(res[7:15], 16) & 0x04000000 != 0),
+			"fp_motion_sensor": (int(res[7:15], 16) & 0x01000000 != 0),
+			"fp_over_voltage_ain1": (int(res[7:15], 16) & 0x00800000 != 0),
+			"fp_over_voltage_ain2": (int(res[7:15], 16) & 0x00400000 != 0),
+			"fp_over_voltage_ain3": (int(res[7:15], 16) & 0x00200000 != 0),
+			"fp_under_voltage_ain1": (int(res[7:15], 16) & 0x00080000 != 0),
+			"fp_under_voltage_ain2": (int(res[7:15], 16) & 0x00040000 != 0),
+			"fp_under_voltage_ain3": (int(res[7:15], 16) & 0x00020000 != 0),
+			"fp_ignition_on": (int(res[7:15], 16) & 0x00008000 != 0),
+			"fp_i_button_present": (int(res[7:15], 16) & 0x00004000 != 0),
+			"fp_mov_accl_antitheft": (int(res[7:15], 16) & 0x00002000 != 0),
+			"fp_mov_accl_mov_detector": (int(res[7:15], 16) & 0x00001000 != 0),
+			"fp_din4_pulled_gnd": (int(res[7:15], 16) & 0x00000800 != 0),
+			"fp_din5_pulled_gnd": (int(res[7:15], 16) & 0x00000400 != 0),
+			"fp_din6_pulled_gnd": (int(res[7:15], 16) & 0x00000200 != 0),
+			"sleep_power_under_volt": (int(res[15:-2], 16) & 0x40000000 != 0),
+			"sleep_after_period": (int(res[15:-2], 16) & 0x10000000 != 0),
+			"sleep_after_ignition_off": (int(res[15:-2], 16) & 0x08000000 != 0)
+		}
 		return syspmy
 
 	#power management sleep
 	def qsyspms(self):
-		self.uart.write("QSYSPMS//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			result_1 = int(res[7:15], 16)
-			result_2 = int(res[15:-2], 16)
-			syspms={
-				"fpBatteryLow": (result_1 & 0x40000000 != 0),
-				"fpAfterPeriod": (result_1 & 0x20000000 != 0),
-				"fpIgnitionOn": (result_1 & 0x08000000 != 0),
-				"fpIButtonB": (result_1 & 0x04000000 != 0),
-				"fpMinuteMatch": (result_1 & 0x00800000 != 0),
-				"fpHourMatch": (result_1 & 0x00400000 != 0),
-				"fpWeekdayMatch": (result_1 & 0x00200000 != 0),
-				"fpDayMatch": (result_1 & 0x00100000 != 0),
-				"sbyBatteryLow": (result_2 & 0x40000000 != 0),
-				"sbyAfterPeriod": (result_2 & 0x20000000 != 0),
-				"sbyIgnitionOn": (result_2 & 0x08000000 != 0),
-				"sbyIButtonB": (result_2 & 0x04000000 != 0),
-				"sbyMinuteMatch": (result_2 & 0x00800000 != 0),
-				"sbyHourMatch": (result_2 & 0x00400000 != 0),
-				"sbyWeekdayMatch": (result_2 & 0x00200000 != 0),
-				"sbyDayMatch": (result_2 & 0x00100000 != 0)
-			}
+		c= "QSYSPMS//"
+		res = g4ngps.execute_command(self,c)
+		result_1 = int(res[7:15], 16)
+		result_2 = int(res[15:-2], 16)
+		syspms={
+			"fpBatteryLow": (result_1 & 0x40000000 != 0),
+			"fpAfterPeriod": (result_1 & 0x20000000 != 0),
+			"fpIgnitionOn": (result_1 & 0x08000000 != 0),
+			"fpIButtonB": (result_1 & 0x04000000 != 0),
+			"fpMinuteMatch": (result_1 & 0x00800000 != 0),
+			"fpHourMatch": (result_1 & 0x00400000 != 0),
+			"fpWeekdayMatch": (result_1 & 0x00200000 != 0),
+			"fpDayMatch": (result_1 & 0x00100000 != 0),
+			"sbyBatteryLow": (result_2 & 0x40000000 != 0),
+			"sbyAfterPeriod": (result_2 & 0x20000000 != 0),
+			"sbyIgnitionOn": (result_2 & 0x08000000 != 0),
+			"sbyIButtonB": (result_2 & 0x04000000 != 0),
+			"sbyMinuteMatch": (result_2 & 0x00800000 != 0),
+			"sbyHourMatch": (result_2 & 0x00400000 != 0),
+			"sbyWeekdayMatch": (result_2 & 0x00200000 != 0),
+			"sbyDayMatch": (result_2 & 0x00100000 != 0)
+		}
 		return syspms
 			
 	#power management sleep control week day
 	def qsysslm(self):
-		self.uart.write("QSYSSLM//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			res = res[7:-2]
-			res_str = res.decode()
-			sysslm={
-				'sleep_hour': None,
-				'sleep_minute':None,
-				'sleep_month_day':None,
-				'sleep_week_day':None,
-			}
-			if(res_str[0:2]=='FF'):
-				sysslm['sleep_hour'] = None
-			else:
-				sysslm['sleep_hour'] = int(res[0:2],16)
-			if(res_str[2:4]=='FF'):
-				sysslm['sleep_hour'] = None
-			else:
-				sysslm['sleep_minute'] = int(res[2:4],16)
-			if(res_str[4:6]=='FF'):
-				sysslm['sleep_month_day'] = None
-			else:
-				sysslm['sleep_month_day'] = int(res[4:6],16)		
-			if(res_str[6:8]=='FF'):
-				sysslm['sleep_week_day'] = None
-			else:
-				sysslm['sleep_week_day'] = int(res[6:8],16)
-			
+		c= "QSYSSLM//"
+		res = g4ngps.execute_command(self,c)
+		res = res[7:-2]
+		res_str = res.decode()
+		sysslm={
+			'sleep_hour': None,
+			'sleep_minute':None,
+			'sleep_month_day':None,
+			'sleep_week_day':None,
+		}
+		if(res_str[0:2]=='FF'):
+			sysslm['sleep_hour'] = None
+		else:
+			sysslm['sleep_hour'] = int(res[0:2],16)
+		if(res_str[2:4]=='FF'):
+			sysslm['sleep_hour'] = None
+		else:
+			sysslm['sleep_minute'] = int(res[2:4],16)
+		if(res_str[4:6]=='FF'):
+			sysslm['sleep_month_day'] = None
+		else:
+			sysslm['sleep_month_day'] = int(res[4:6],16)		
+		if(res_str[6:8]=='FF'):
+			sysslm['sleep_week_day'] = None
+		else:
+			sysslm['sleep_week_day'] = int(res[6:8],16)
+		
 		return sysslm
 
 	#power management delay full_power to stanby 
 	def qsyspdl(self):
-		self.uart.write("QSYSPDL//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			res = res[7:-2]
-			res_str=res.decode()
-			syspdl={
-				'delay_full_power_to_standby': None
-			}	
-			if(res_str=='FFFF'):
-				syspdl['delay_full_power_to_standby':None]
-			else:
-				syspdl['delay_full_power_to_standby']:int(res,16)	
+		c= "QSYSPDL//"
+		res = g4ngps.execute_command(self,c)
+		res = res[7:-2]
+		res_str=res.decode()
+		syspdl={
+			'delay_full_power_to_standby': None
+		}	
+		if(res_str=='FFFF'):
+			syspdl['delay_full_power_to_standby']:None
+		else:
+			syspdl['delay_full_power_to_standby']:int(res,16)	
 		return syspdl
 
 	#power management delay full_power to sleep
 	def qsyspds(self):
-		self.uart.write("QSYSPDS//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			res = res[7:-2]
-			res_str=res.decode()
-			syspds={
-				'delay_full_power_to_sleep' : None
-			}
-			if(res_str=='FFFF'):
-				syspds['delay_full_power_to_sleep': None]
-			else:
-				syspds['delay_full_power_to_sleep': int(res,16)]	
+		c="QSYSPDS//"
+		res = g4ngps.execute_command(self,c)
+		res = res[7:-2]
+		res_str=res.decode()
+		syspds={
+			'delay_full_power_to_sleep' : None
+		}
+		if(res_str=='FFFF'):
+			syspds['delay_full_power_to_sleep']: None
+		else:
+			syspds['delay_full_power_to_sleep']: int(res,16)	
 		return syspds	
 
 	#power management full power hour parameters
 	def qsysppm(self):
-		self.uart.write("QSYSPPM//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			res =res[7:-2]
-			qsysppm={
-				'fp_hour1': res[:2].decode() +":"+res[2:4].decode(),
-				'tr_hour2': res[4:6].decode() +":"+res[6:8].decode(),
-				'tr_hour3': res[8:10].decode() +":"+res[10:12].decode(),
-				'tr_hour4': res[12:14].decode() +":"+res[14:16].decode(),
-				'tr_hour5': res[16:18].decode() +":"+res[18:20].decode(),
-				'tr_hour6': res[20:22].decode() +":"+res[22:24].decode(),
-				'tr_hour7': res[24:26].decode() +":"+res[26:28].decode(),
-				'tr_hour8': res[28:30].decode() +":"+res[30:32].decode(),
-				'fp_hour9': res[32:34].decode() +":"+res[34:36].decode(),
-				'fp_hour10': res[36:38].decode() +":"+res[38:40].decode(),
-				'fp_hour11': res[40:42].decode() +":"+res[42:44].decode(),
-				'fp_hour12': res[44:46].decode() +":"+res[46:48].decode(),
-			}
-			for i in range(1, 13):
-				key = 'fp_hour' + str(i)
-				if qsysppm[key] == "99:99":
-					qsysppm[key] = None
+		c="QSYSPPM//"
+		res = g4ngps.execute_command(self,c)
+		res =res[7:-2]
+		qsysppm={
+			'fp_hour1': res[:2].decode() +":"+res[2:4].decode(),
+			'tr_hour2': res[4:6].decode() +":"+res[6:8].decode(),
+			'tr_hour3': res[8:10].decode() +":"+res[10:12].decode(),
+			'tr_hour4': res[12:14].decode() +":"+res[14:16].decode(),
+			'tr_hour5': res[16:18].decode() +":"+res[18:20].decode(),
+			'tr_hour6': res[20:22].decode() +":"+res[22:24].decode(),
+			'tr_hour7': res[24:26].decode() +":"+res[26:28].decode(),
+			'tr_hour8': res[28:30].decode() +":"+res[30:32].decode(),
+			'fp_hour9': res[32:34].decode() +":"+res[34:36].decode(),
+			'fp_hour10': res[36:38].decode() +":"+res[38:40].decode(),
+			'fp_hour11': res[40:42].decode() +":"+res[42:44].decode(),
+			'fp_hour12': res[44:46].decode() +":"+res[46:48].decode(),
+		}
+		for i in range(1, 13):
+			key = 'fp_hour' + str(i)
+			if qsysppm[key] == "99:99":
+				qsysppm[key] = None
 
 		return qsysppm	
 
 	#power management prewakeup interval
 	def qsyspwk(self):
-		self.uart.write("QSYSPWK//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			res =res[7:-2]
-			syspwk = {
-				'prewakeup_interval':int(res,16)
-			}
+		c="QSYSPWK//"
+		res = g4ngps.execute_command(self,c)
+		res =res[7:-2]
+		syspwk = {
+			'prewakeup_interval':int(res,16)
+		}
 		return syspwk
 
 	#power management stand by transition period
 	def qsyssls(self):
-		self.uart.write("QSYSSLS//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			res =res[7:-2]
-			syssls = {
-				'stand_by_trasition_period':int(res,16)
-			}
+		c="QSYSSLS//"
+		res = g4ngps.execute_command(self,c)	
+		res =res[7:-2]
+		syssls = {
+			'stand_by_trasition_period':int(res,16)
+		}
 		return syssls	
 
 	#power mamangement sleep transition period
 	def qsysslc(self):
-		self.uart.write("QSYSSLC//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			res =res[7:-2]
-			sysslc = {
-				'sleep_trasition_period':int(res,16)
-			}
+		c="QSYSSLC//"
+		res = g4ngps.execute_command(self,c)
+		res =res[7:-2]
+		sysslc = {
+			'sleep_trasition_period':int(res,16)
+		}
 		return sysslc
 
 	#power management idle time
 	def qsysidt(self):
-		self.uart.write("QSYSIDT//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			res =res[7:-2]
-			sysslc = {
-				'sleep_trasition_period':int(res,16)
-			}
+		c="QSYSIDT//"
+		res = g4ngps.execute_command(self,c)
+		res =res[7:-2]
+		sysslc = {
+			'sleep_trasition_period':int(res,16)
+		}
 		return sysslc	
 
 #Alarm system local network
 	def qalmhst(self):
-		self.uart.write("QALMHST//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			res =int(res[7:-2],16)
-			almhst = {
-				"alarms": (res & 0x80000000 == 0),
-				"overspeed": (res & 0x40000000 != 0),
-				"ignition": (res & 0x20000000 != 0),
-				"panic_button": (res & 0x10000000 != 0),
-				"relay": (res & 0x08000000 != 0),
-				"input_power_undervoltage": (res & 0x04000000 != 0),
-				"input_power_overvoltage": (res & 0x02000000 != 0),
-				"acc_voltage_under_threshold": (res & 0x01000000 != 0),
-				"acc_error": (res & 0x00800000 != 0),
-				"relay_disconnected": (res & 0x00400000 != 0),
-				"ibutton_disconnected": (res & 0x00200000 != 0),
-				"data_limit": (res & 0x00040000 != 0),
-				"daily_traffic_exceeded": (res & 0x00020000 != 0),
-				"monthly_traffic_exceeded": (res & 0x00010000 != 0),
-				"gps_missing": (res & 0x00008000 != 0),
-				"stationary_contact_on": (res & 0x00004000 != 0),
-				"stationary_contact_off": (res & 0x00002000 != 0),
-				"speed_exceeded_contact_off_threshold": (res & 0x00001000 != 0),
-				"motion_sensor_movement": (res & 0x00000400 != 0),
-				"private_alarm": (res & 0x00000100 != 0),
-				"gps_jamming": (res & 0x00000040 != 0),
-				"gsm_jamming": (res & 0x00000020 != 0),
-				"accelerometer_antitheft_alarm": (res & 0x00000008 != 0),
-				"downtime_alarm": (res & 0x00000004 != 0)
-			}
+		c="QALMHST//"
+		res = g4ngps.execute_command(self,c)
+		res =int(res[7:-2],16)
+		almhst = {
+			"alarm": (res & 0x80000000 == 0),
+			"over_speed": (res & 0x40000000 != 0),
+			"ign": (res & 0x20000000 != 0),
+			"panic_bt": (res & 0x10000000 != 0),
+			"relay": (res & 0x08000000 != 0),
+			"inp_pwr_uv": (res & 0x04000000 != 0),
+			"inp_pwr_ov": (res & 0x02000000 != 0),
+			"acc_volt_ut": (res & 0x01000000 != 0),
+			"acc_err": (res & 0x00800000 != 0),
+			"relay_dc": (res & 0x00400000 != 0),
+			"ibtn_dc": (res & 0x00200000 != 0),
+			"data_lim": (res & 0x00040000 != 0),
+			"dly_traf_ex": (res & 0x00020000 != 0),
+			"mthly_traf_ex": (res & 0x00010000 != 0),
+			"gps_miss": (res & 0x00008000 != 0),
+			"stc_ct_on": (res & 0x00004000 != 0),
+			"stc_ct_off": (res & 0x00002000 != 0),
+			"spd_ex_ct_ot": (res & 0x00001000 != 0),
+			"motion_sen_mv": (res & 0x00000400 != 0),
+			"priv_alarm": (res & 0x00000100 != 0),
+			"gps_jam": (res & 0x00000040 != 0),
+			"gsm_jam": (res & 0x00000020 != 0),
+			"accel_antith_alarm": (res & 0x00000008 != 0),
+			"dwntime_alarm": (res & 0x00000004 != 0)
+		}
 		return almhst
 
 #Alarm system roaming network
 	def qalmrst(self):
-		self.uart.write("QALMRST//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			res =int(res[7:-2],16)
-			almrst = {
-				"alarms": (res & 0x80000000 == 0),
-				"overspeed": (res & 0x40000000 != 0),
-				"ignition": (res & 0x20000000 != 0),
-				"panic_button": (res & 0x10000000 != 0),
-				"relay": (res & 0x08000000 != 0),
-				"input_power_undervoltage": (res & 0x04000000 != 0),
-				"input_power_overvoltage": (res & 0x02000000 != 0),
-				"acc_voltage_under_threshold": (res & 0x01000000 != 0),
-				"acc_error": (res & 0x00800000 != 0),
-				"relay_disconnected": (res & 0x00400000 != 0),
-				"ibutton_disconnected": (res & 0x00200000 != 0),
-				"data_limit": (res & 0x00040000 != 0),
-				"daily_traffic_exceeded": (res & 0x00020000 != 0),
-				"monthly_traffic_exceeded": (res & 0x00010000 != 0),
-				"gps_missing": (res & 0x00008000 != 0),
-				"stationary_contact_on": (res & 0x00004000 != 0),
-				"stationary_contact_off": (res & 0x00002000 != 0),
-				"speed_exceeded_contact_off_threshold": (res & 0x00001000 != 0),
-				"motion_sensor_movement": (res & 0x00000400 != 0),
-				"private_alarm": (res & 0x00000100 != 0),
-				"gps_jamming": (res & 0x00000040 != 0),
-				"gsm_jamming": (res & 0x00000020 != 0),
-				"accelerometer_antitheft_alarm": (res & 0x00000008 != 0),
-				"downtime_alarm": (res & 0x00000004 != 0)
-			}
+		c="QALMRST//"
+		res = g4ngps.execute_command(self,c)
+		res = int(res[7:-2],16)
+		almrst = {
+			"alarm": (res & 0x80000000 == 0),
+			"over_speed": (res & 0x40000000 != 0),
+			"ign": (res & 0x20000000 != 0),
+			"panic_bt": (res & 0x10000000 != 0),
+			"relay": (res & 0x08000000 != 0),
+			"inp_pwr_uv": (res & 0x04000000 != 0),
+			"inp_pwr_ov": (res & 0x02000000 != 0),
+			"acc_volt_ut": (res & 0x01000000 != 0),
+			"acc_err": (res & 0x00800000 != 0),
+			"relay_dc": (res & 0x00400000 != 0),
+			"ibtn_dc": (res & 0x00200000 != 0),
+			"data_lim": (res & 0x00040000 != 0),
+			"dly_traf_ex": (res & 0x00020000 != 0),
+			"mthly_traf_ex": (res & 0x00010000 != 0),
+			"gps_miss": (res & 0x00008000 != 0),
+			"stc_ct_on": (res & 0x00004000 != 0),
+			"stc_ct_off": (res & 0x00002000 != 0),
+			"spd_ex_ct_ot": (res & 0x00001000 != 0),
+			"motion_sen_mv": (res & 0x00000400 != 0),
+			"priv_alarm": (res & 0x00000100 != 0),
+			"gps_jam": (res & 0x00000040 != 0),
+			"gsm_jam": (res & 0x00000020 != 0),
+			"accel_antith_alarm": (res & 0x00000008 != 0),
+			"dwntime_alarm": (res & 0x00000004 != 0)
+		}
 		return almrst	
 
 #Alarm system overspeed speed threashold
 	def qalmovs(self):
-		self.uart.write("QALMOVS//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			res=int(res[7:-2],16)
-			almovs={
-				'overspeed_threshold':(res  & 0xffff) / 10
-			}
+		c="QALMOVS//"
+		res = g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		almovs={
+			'overspeed_threshold':(res  & 0xffff) / 10
+		}
 		return almovs
 
 	#Alarm system movement treshold
 	def qalmovs(self):
-		self.uart.write("QALMMOV//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			res=int(res[7:-2],16)
-			almmov={
-				'movement_threshold':(res  & 0xffff) / 10
-			}
+		c="QALMMOV//"
+		res = g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		almmov={
+			'movement_threshold':(res  & 0xffff) / 10
+		}
 		return almmov
 
 	#Alarm system stationary timer contact on
 	def qalmstn(self):
-		self.uart.write("QALMSTN//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			res=int(res[7:-2],16)
-			almstn={
-				'stationary_timer_contact_on':(res  & 0xffff)
-			}
+		c="QALMSTN//"
+		res = g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		almstn={
+			'stationary_timer_contact_on':(res  & 0xffff)
+		}
 		return almstn
 
 	#Alarm system stationary timer contact on
 	def qalmstf(self):
-		self.uart.write("QALMSTF//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			res=int(res[7:-2],16)
-			almstf={
-				'stationary_timer_contact_off':(res  & 0xffff)
-			}
+		sc="QALMSTF//"
+		res = g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		almstf={
+			'stationary_timer_contact_off':(res  & 0xffff)
+		}
 		return almstf
 
 	#Alarm system speed threshold contact on
 	def qalmssn(self):
-		self.uart.write("QALMSSN//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			res=int(res[7:-2],16)
-			almssn={
-				'speed_threshold_contact_on':(res  & 0xffff) / 10
-			}
+		c="QALMSSN//"
+		res = g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		almssn={
+			'speed_threshold_contact_on':(res  & 0xffff) / 10
+		}
 		return almssn	
 
 	#Alarm system speed threshold contact off
 	def qalmssf(self):
-		self.uart.write("QALMSSF//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			res=int(res[7:-2],16)
-			almssf={
-				'speed_threshold_contact_off':(res  & 0xffff) / 10
-			}
+		c="QALMSSF//"
+		res = g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		almssf={
+			'speed_threshold_contact_off':(res  & 0xffff) / 10
+		}
 		return almssf		
 
 	#Alarm system  missing gps treshold
 	def qalmgmt(self):
-		self.uart.write("QALMGMT//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			res=int(res[7:-2],16)
-			almgmt={
-				'gps_missing_threshold':(res  & 0xffff)
-			}
+		c="QALMGMT//"
+		res = g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		almgmt={
+			'gps_missing_threshold':(res  & 0xffff)
+		}
 		return almgmt
 
 	#Alarm system down time timer
 	def qalmdta(self):
-		self.uart.write("QALMDTA//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			res=int(res[7:-2],16)
-			almdta={
-				'down_time_timer':(res  & 0xffff)
-			}
+		c="QALMDTA//"
+		res = g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		almdta={
+			'down_time_timer':(res  & 0xffff)
+		}
 		return almdta
 
 
  	#Alarm system data flash limit
 	def qalmdfl(self):
-		self.uart.write("QALMDFL//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			res=int(res[7:-2],16)
-			almdfl={
-				'data_flash_limit':(res  & 0xffff)
-			}
+		c="QALMDFL//"
+		res = g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		almdfl={
+			'data_flash_limit':(res  & 0xffff)
+		}
 		return almdfl
 
 	#Alarm system delay accelerometer movement threhold
 	def qalmatd(self):
-		self.uart.write("QALMDFL//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			res=int(res[7:-2],16)
-			almatd={
-				'delay_acc_movement':(res  & 0xffff)
-			}
+		c="QALMDFL//"
+		res = g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		almatd={
+			'delay_acc_movement':(res  & 0xffff)
+		}
 		return almatd
 
 #Transmission system
 	#transmission on local network
 	def qtrshst(self):
-		self.uart.write("QTRSHST//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			res=int(res[7:-2],16)
-			trshst={
-				"transmission": (res & 0x80000000 == 0),
-				"interval_a_transmission": (res & 0x40000000 != 0),
-				"interval_a_when_contact_on_transmission": (res & 0x20000000 != 0),
-				"interval_a_when_contact_off_transmission": (res & 0x10000000 != 0),
-				"interval_a_when_alarms_set_transmission": (res & 0x08000000 != 0),
-				"interval_b_transmission": (res & 0x04000000 != 0),
-				"interval_b_when_contact_on_transmission": (res & 0x02000000 != 0),
-				"interval_b_when_contact_off_transmission": (res & 0x01000000 != 0),
-				"interval_b_when_alarms_set_transmission": (res & 0x00800000 != 0),
-				"alarm_transmission": (res & 0x00400000 != 0),
-				"accumulated_data_transmission": (res & 0x00200000 != 0),
-				"contact_transmission": (res & 0x00100000 != 0),
-				"hour_match_transmission": (res & 0x00080000 != 0),
-				"i_button_group_transmission": (res & 0x00040000 != 0),
-				"daily_excessive_traffic": (res & 0x00020000 != 0),
-				"monthly_excessive_traffic": (res & 0x00010000 != 0),
-				"gps_valid_transmission": (res & 0x00008000 != 0),
-				"trans_after_power_on": (res & 0x00004000 != 0),
-				"delay_transmission": (res & 0x00002000 != 0),
-				"clear_transmission": (res & 0x00001000 != 0),
-				"trans_change_work_private": (res & 0x00000800 != 0),
-				"epoch_interval_a_contact_on": (res & 0x00000400 != 0),
-				"epoch_interval_a_contact_off": (res & 0x00000200 != 0),
-				"epoch_interval_b_contact_on": (res & 0x00000100 != 0),
-				"epoch_interval_b_contact_off": (res & 0x00000080 != 0),
-				"epoch_enabled": (
-					(res & 0x00000400) != 0 or (res & 0x00000200) != 0 or
-					(res & 0x00000100) != 0 or (res & 0x00000080) != 0),
-				"cumulative_distance": (res & 0x00000040 != 0),
-				"allow_trans_gen_acq_engine": (res & 0x00000020 != 0),
-				"transmit_rtc": (res & 0x00000010)
+		c="QTRSHST//"
+		res = g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		trshst={
+			"tr": (res & 0x80000000 == 0),
+			"tr_int_a": (res & 0x40000000 != 0),
+			"tr_int_a_cont_on": (res & 0x20000000 != 0),
+			"tr_int_a_cont_off": (res & 0x10000000 != 0),
+			"tr_int_a_alarms": (res & 0x08000000 != 0),
+			"tr_int_b": (res & 0x04000000 != 0),
+			"tr_int_b_cont_on": (res & 0x02000000 != 0),
+			"tr_int_b_cont_off": (res & 0x01000000 != 0),
+			"tr_int_b_alarms": (res & 0x00800000 != 0),
+			"tr_alarm": (res & 0x00400000 != 0),
+			"tr_data": (res & 0x00200000 != 0),
+			"tr_contact": (res & 0x00100000 != 0),
+			"tr_hr_match": (res & 0x00080000 != 0),
+			"tr_i_button": (res & 0x00040000 != 0),
+			"tr_daily_ex": (res & 0x00020000 != 0),
+			"tr_monthly_ex": (res & 0x00010000 != 0),
+			"tr_gps": (res & 0x00008000 != 0),
+			"tr_pwr_on": (res & 0x00004000 != 0),
+			"tr_delay": (res & 0x00002000 != 0),
+			"tr_clear": (res & 0x00001000 != 0),
+			"tr_work_priv": (res & 0x00000800 != 0),
+			"tr_ep_int_a_cont_on": (res & 0x00000400 != 0),
+			"tr_ep_int_a_cont_off": (res & 0x00000200 != 0),
+			"tr_ep_int_b_cont_on": (res & 0x00000100 != 0),
+			"tr_ep_int_b_cont_off": (res & 0x00000080 != 0),
+			"tr_ep_enabled": (
+				(res & 0x00000400) != 0 or (res & 0x00000200) != 0 or
+				(res & 0x00000100) != 0 or (res & 0x00000080) != 0),
+			"tr_cumulative_dist": (res & 0x00000040 != 0),
+			"tr_allow_gen_acq": (res & 0x00000020 != 0),
+			"tr_rtc": (res & 0x00000010)
 			}
 		return trshst
 
 	#transmission on roaming network
 	def qtrsrst(self):
-		self.uart.write("QTRSRST//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			res=int(res[7:-2],16)
-			trsrst={
-				"transmission": (res & 0x80000000 == 0),
-				"interval_a_transmission": (res & 0x40000000 != 0),
-				"interval_a_when_contact_on_transmission": (res & 0x20000000 != 0),
-				"interval_a_when_contact_off_transmission": (res & 0x10000000 != 0),
-				"interval_a_when_alarms_set_transmission": (res & 0x08000000 != 0),
-				"interval_b_transmission": (res & 0x04000000 != 0),
-				"interval_b_when_contact_on_transmission": (res & 0x02000000 != 0),
-				"interval_b_when_contact_off_transmission": (res & 0x01000000 != 0),
-				"interval_b_when_alarms_set_transmission": (res & 0x00800000 != 0),
-				"alarm_transmission": (res & 0x00400000 != 0),
-				"accumulated_data_transmission": (res & 0x00200000 != 0),
-				"contact_transmission": (res & 0x00100000 != 0),
-				"hour_match_transmission": (res & 0x00080000 != 0),
-				"i_button_group_transmission": (res & 0x00040000 != 0),
-				"daily_excessive_traffic": (res & 0x00020000 != 0),
-				"monthly_excessive_traffic": (res & 0x00010000 != 0),
-				"gps_valid_transmission": (res & 0x00008000 != 0),
-				"trans_after_power_on": (res & 0x00004000 != 0),
-				"delay_transmission": (res & 0x00002000 != 0),
-				"clear_transmission": (res & 0x00001000 != 0),
-				"trans_change_work_private": (res & 0x00000800 != 0),
-				"epoch_interval_a_contact_on": (res & 0x00000400 != 0),
-				"epoch_interval_a_contact_off": (res & 0x00000200 != 0),
-				"epoch_interval_b_contact_on": (res & 0x00000100 != 0),
-				"epoch_interval_b_contact_off": (res & 0x00000080 != 0),
-				"epoch_enabled": (
-					(res & 0x00000400) != 0 or (res & 0x00000200) != 0 or
-					(res & 0x00000100) != 0 or (res & 0x00000080) != 0),
-				"cumulative_distance": (res & 0x00000040 != 0),
-				"allow_trans_gen_acq_engine": (res & 0x00000020 != 0),
-				"transmit_rtc": (res & 0x00000010)
+		c = "QTRSRST//"
+		res = g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		trshst={
+			"tr": (res & 0x80000000 == 0),
+			"tr_int_a": (res & 0x40000000 != 0),
+			"tr_int_a_cont_on": (res & 0x20000000 != 0),
+			"tr_int_a_cont_off": (res & 0x10000000 != 0),
+			"tr_int_a_alarms": (res & 0x08000000 != 0),
+			"tr_int_b": (res & 0x04000000 != 0),
+			"tr_int_b_cont_on": (res & 0x02000000 != 0),
+			"tr_int_b_cont_off": (res & 0x01000000 != 0),
+			"tr_int_b_alarms": (res & 0x00800000 != 0),
+			"tr_alarm": (res & 0x00400000 != 0),
+			"tr_data": (res & 0x00200000 != 0),
+			"tr_contact": (res & 0x00100000 != 0),
+			"tr_hr_match": (res & 0x00080000 != 0),
+			"tr_i_button": (res & 0x00040000 != 0),
+			"tr_daily_ex": (res & 0x00020000 != 0),
+			"tr_monthly_ex": (res & 0x00010000 != 0),
+			"tr_gps": (res & 0x00008000 != 0),
+			"tr_pwr_on": (res & 0x00004000 != 0),
+			"tr_delay": (res & 0x00002000 != 0),
+			"tr_clear": (res & 0x00001000 != 0),
+			"tr_work_priv": (res & 0x00000800 != 0),
+			"tr_ep_int_a_cont_on": (res & 0x00000400 != 0),
+			"tr_ep_int_a_cont_off": (res & 0x00000200 != 0),
+			"tr_ep_int_b_cont_on": (res & 0x00000100 != 0),
+			"tr_ep_int_b_cont_off": (res & 0x00000080 != 0),
+			"tr_ep_enabled": (
+				(res & 0x00000400) != 0 or (res & 0x00000200) != 0 or
+				(res & 0x00000100) != 0 or (res & 0x00000080) != 0),
+			"tr_cumulative_dist": (res & 0x00000040 != 0),
+			"tr_allow_gen_acq": (res & 0x00000020 != 0),
+			"tr_rtc": (res & 0x00000010)
 			}
 		return trsrst
 
 	#transmission threshold accumulated data for local network
 	def qtrshad(self):
-		self.uart.write("QTRSHAD//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			res=int(res[7:-2],16)
-			trshad={
-				"threshold_accumulated_data": ((res & 0xffff) /1024)
-			}
+		c= "QTRSHAD//"
+		res = g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		trshad={
+			"threshold_accumulated_data": ((res & 0xffff) /1024)
+		}
 		return trshad	
 
 	#transmission threshold accumulated data for roaming network
 	def qtrsrad(self):
-		self.uart.write("QTRSRAD//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			res=int(res[7:-2],16)
-			trsrad={
-				"threshold_accumulated_data": ((res & 0xffff) /1024)
-			}
+		c= "QTRSRAD//"
+		res = g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		trsrad={
+			"threshold_accumulated_data": ((res & 0xffff) /1024)
+		}
 		return trsrad	
 
 	#transmission interval a local network  
 	def qtrshia(self):
-		self.uart.write("QTRSHIA//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			res=int(res[7:-2],16)
-			trshia={
-				"interval_a": res & 0xffff
-			}	
+		c="QTRSHIA//"
+		res = g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		trshia={
+			"interval_a": res & 0xffff
+		}	
 		return trshia
 
 	#transmission interval a roaming network  
@@ -1060,264 +938,487 @@ class g4ngps:
 
 	#transmission interval b local network  
 	def qtrshib(self):
-		self.uart.write("QTRSHIB//")
+		c="QTRSHIB//"
 		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			res=int(res[7:-2],16)
-			trshib={
-				"interval_b": res & 0xffff
-			}	
+		res = g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		trshib={
+			"interval_b": res & 0xffff
+		}	
 		return trshib
 
 	#transmission interval b roaming net
 	def qtrsrib(self):
-		self.uart.write("QTRSRIB//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			res=int(res[7:-2],16)
-			trsrib={
-				"interval_b": res & 0xffff
-			}	
+		c="QTRSRIB//"
+		res = g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		trsrib={
+			"interval_b": res & 0xffff
+		}	
 		return trsrib
 
 	#transmission hours roam net
 	def qtrsrmt(self):
-		self.uart.write("QTRSRMT//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			res=res[7:-2]
-			trsrmt={
-				'tr_hour1': res[:2].decode() +":"+res[2:4].decode(),
-				'tr_hour2': res[6:8].decode() +":"+res[8:10].decode(),
-				'tr_hour3': res[12:14].decode() +":"+res[14:16].decode(),
-				'tr_hour4': res[18:20].decode() +":"+res[20:22].decode(),
-				'tr_hour5': res[24:26].decode() +":"+res[26:28].decode(),
-				'tr_hour6': res[30:32].decode() +":"+res[32:34].decode(),
-				'tr_hour7': res[36:38].decode() +":"+res[38:40].decode(),
-				'tr_hour8': res[42:44].decode() +":"+res[44:46].decode(),
-			}
-			for i in range(1, 9):
-				key = 'tr_hour' + str(i)
-				if trsrmt[key] == "99:99":
-					trsrmt[key] = None
+		c="QTRSRMT//"
+		res = g4ngps.execute_command(self,c)
+		res=res[7:-2]
+		trsrmt={
+			'tr_hour1': res[:2].decode() +":"+res[2:4].decode(),
+			'tr_hour2': res[6:8].decode() +":"+res[8:10].decode(),
+			'tr_hour3': res[12:14].decode() +":"+res[14:16].decode(),
+			'tr_hour4': res[18:20].decode() +":"+res[20:22].decode(),
+			'tr_hour5': res[24:26].decode() +":"+res[26:28].decode(),
+			'tr_hour6': res[30:32].decode() +":"+res[32:34].decode(),
+			'tr_hour7': res[36:38].decode() +":"+res[38:40].decode(),
+			'tr_hour8': res[42:44].decode() +":"+res[44:46].decode(),
+		}
+		for i in range(1, 9):
+			key = 'tr_hour' + str(i)
+			if trsrmt[key] == "99:99":
+				trsrmt[key] = None
 		return trsrmt
 
 	#transmission hours local net
 	def qtrshmt(self):
-		self.uart.write("QTRSHMT//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			res=res[7:-2]
-			trshmt={
-				'tr_hour1': res[:2].decode() +":"+res[2:4].decode(),
-				'tr_hour2': res[6:8].decode() +":"+res[8:10].decode(),
-				'tr_hour3': res[12:14].decode() +":"+res[14:16].decode(),
-				'tr_hour4': res[18:20].decode() +":"+res[20:22].decode(),
-				'tr_hour5': res[24:26].decode() +":"+res[26:28].decode(),
-				'tr_hour6': res[30:32].decode() +":"+res[32:34].decode(),
-				'tr_hour7': res[36:38].decode() +":"+res[38:40].decode(),
-				'tr_hour8': res[42:44].decode() +":"+res[44:46].decode(),
-			}
-			for i in range(1, 9):
-				key = 'tr_hour' + str(i)
-				if trshmt[key] == "99:99":
-					trshmt[key] = None
+		c="QTRSHMT//"
+		res = g4ngps.execute_command(self,c)
+		res=res[7:-2]
+		trshmt={
+			'tr_hour1': res[:2].decode() +":"+res[2:4].decode(),
+			'tr_hour2': res[6:8].decode() +":"+res[8:10].decode(),
+			'tr_hour3': res[12:14].decode() +":"+res[14:16].decode(),
+			'tr_hour4': res[18:20].decode() +":"+res[20:22].decode(),
+			'tr_hour5': res[24:26].decode() +":"+res[26:28].decode(),
+			'tr_hour6': res[30:32].decode() +":"+res[32:34].decode(),
+			'tr_hour7': res[36:38].decode() +":"+res[38:40].decode(),
+			'tr_hour8': res[42:44].decode() +":"+res[44:46].decode(),
+		}
+		for i in range(1, 9):
+			key = 'tr_hour' + str(i)
+			if trshmt[key] == "99:99":
+				trshmt[key] = None
 		return trshmt		
 
 	#transmission daily traffic ext sim ln
 	def qtrshdl(self):
-		self.uart.write("QTRSHDL//")
-		time.sleep_ms(100)
-		if self.uart.any():	
-			res = self.uart.read()
-			print(res)
-			res=int(res[7:-2],16)
-			trshdl={
-				'daily_traffic_limit_extern_sim': (res & 0xffffffff) / 1024
-			}
+		c= "QTRSHDL//"
+		res = g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		trshdl={
+			'daily_traffic_limit_extern_sim': (res & 0xffffffff) / 1024
+		}
 		return trshdl
 	#trasnmission daily traffic ext sim roam net
 	def qtrsrdl(self):
-		self.uart.write("QTRSRDL//")
-		time.sleep_ms(100)
-		if self.uart.any():	
-			res = self.uart.read()
-			print(res)
-			res=int(res[7:-2],16)
-			trsrdl={
-				'daily_traffic_limit_extern_sim': (res & 0xffffffff) / 1024
-			}
+		c= "QTRSRDL//"
+		res = g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		trsrdl={
+			'daily_traffic_limit_extern_sim': (res & 0xffffffff) / 1024
+		}
 		return trsrdl	
 
 	#transmission daily traffic int sim ln
 	def qtrshdc(self):
-		self.uart.write("QTRSHDC//")
-		time.sleep_ms(100)
-		if self.uart.any():	
-			res = self.uart.read()
-			print(res)
-			res=int(res[7:-2],16)
-			trshdc={
-				'daily_traffic_limit_int_sim': (res & 0xffffffff) / 1024
-			}
+		c="QTRSHDC//"
+		res = g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		trshdc={
+			'daily_traffic_limit_int_sim': (res & 0xffffffff) / 1024
+		}
 		return trshdc
 	#trasnmission daily traffic int sim rn
 	def qtrsrdc(self):
-		self.uart.write("QTRSRDC//")
-		time.sleep_ms(100)
-		if self.uart.any():	
-			res = self.uart.read()
-			print(res)
-			res=int(res[7:-2],16)
-			trsrdc={
-				'daily_traffic_limit_int_sim': (res & 0xffffffff) / 1024
-			}
+		c="QTRSRDC//"
+		res = g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		trsrdc={
+			'daily_traffic_limit_int_sim': (res & 0xffffffff) / 1024
+		}
 		return trsrdc
 
 	#transmission month traffic ext sim local network
 	def qtrshml(self):
-		self.uart.write("QTRSHML//")
-		time.sleep_ms(100)
-		if self.uart.any():	
-			res = self.uart.read()
-			print(res)
-			res=int(res[7:-2],16)
-			trshml={
-				'monthly_traffic_limit_extern_sim': (res & 0xffffffff) / 1048576
-			}
+		c="QTRSHML//"
+		res = g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		trshml={
+			'monthly_traffic_limit_extern_sim': (res & 0xffffffff) / 1048576
+		}
 		return trshml
 	#trasnmission month traffic ext sim roaming network
 	def qtrsrml(self):
-		self.uart.write("QTRSRML//")
-		time.sleep_ms(100)
-		if self.uart.any():	
-			res = self.uart.read()
-			print(res)
-			res=int(res[7:-2],16)
-			trsrml={
-				'monthly_traffic_limit_extern_sim': (res & 0xffffffff) / 1048576
-			}
+		c="QTRSRML//"
+		res = g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		trsrml={
+			'monthly_traffic_limit_extern_sim': (res & 0xffffffff) / 1048576
+		}
 		return trsrml	
 
 
 	#transmission month traffic int sim local network
 	def qtrshmc(self):
-		self.uart.write("QTRSHMC//")
-		time.sleep_ms(100)
-		if self.uart.any():	
-			res = self.uart.read()
-			print(res)
-			res=int(res[7:-2],16)
-			trshmc={
-				'monthly_traffic_limit_int_sim': (res & 0xffffffff) / 1048576
-			}
+		c="QTRSHMC//"
+		res = g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		trshmc={
+			'monthly_traffic_limit_int_sim': (res & 0xffffffff) / 1048576
+		}
 		return trshmc
 	#trasnmission month traffic int sim roaming network
 	def qtrsrmc(self):
-		self.uart.write("QTRSRMC//")
-		time.sleep_ms(100)
-		if self.uart.any():	
-			res = self.uart.read()
-			print(res)
-			res=int(res[7:-2],16)
-			trsrmc={
-				'monthly_traffic_limit_int_sim': (res & 0xffffffff) / 1048576
-			}
+		c="QTRSRMC//"
+		res = g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		trsrmc={
+			'monthly_traffic_limit_int_sim': (res & 0xffffffff) / 1048576
+		}
 		return trsrmc		
 
 	#transmission day of mothly traffic reset
 	def qtrstdr(self):
-		self.uart.write("QTRSTDR//")
-		time.sleep_ms(100)
-		if self.uart.any():	
-			res = self.uart.read()
-			print(res)
-			res=int(res[7:-2],16)
-			trstdr={
-				'day_of_monthly_traffic_reset': (res & 0xff) 
-			}
-			if trstdr['day_of_monthly_traffic_reset'] >= 31:
-				trstdr["day_of_monthly_traffic_reset"] = None
+		c="QTRSTDR//"
+		res = g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		trstdr={
+			'day_of_monthly_traffic_reset': (res & 0xff) 
+		}
+		if trstdr['day_of_monthly_traf_reset'] >= 31:
+			trstdr["day_of_monthly_traf_reset"] = None
 		return trstdr
 
 	#delay transmision in seconds on local network
 	def qtrshdt(self):
-		self.uart.write("QTRSHDT//")		
-		time.sleep_ms(100)
-		if self.uart.any():	
-			res = self.uart.read()
-			print(res)
-			res=int(res[7:-2],16)
-			trshdt={
-				'delay_transmission_seconds' : res
-			}
+		c="QTRSHDT//"	
+		res = g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		trshdt={
+			'd_trans_sec' : res
+		}
 		return trshdt
 	#delay transmision in seconds on roam network
 	def qtrsrdt(self):
-		self.uart.write("QTRSRDT//")		
-		time.sleep_ms(100)
-		if self.uart.any():	
-			res = self.uart.read()
-			print(res)
-			res=int(res[7:-2],16)
-			trsrdt={
-				'delay_transmission_seconds' : res
-			}
+		c="QTRSRDT//"	
+		res = g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		trsrdt={
+			'd_trans_sec' : res
+		}
 		return trsrdt
 
 	#transmission at cumulative distance on local network
 	def qtrshtd(self):
-		self.uart.write("QTRSHTD//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			res=int(res[7:-2],16)
-			trshtd={
-				'cumulative_distance_transmission' : res /1000
-			}
+		c="QTRSHTD//"
+		res = g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		trshtd={
+			'c_dist_transn' : res /1000
+		}
 		return trshtd
 	#transmission at cumulative distance on roaming network
 	def qtrsrtd(self):
-		self.uart.write("QTRSRTD//")
+		c="QTRSRTD//"
 		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			res=int(res[7:-2],16)
-			trshtd={
-				'cumulative_distance_transmission' : res /1000
-			}
+		res = g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		trshtd={
+			'c_dist_trans' : res /1000
+		}
 		return trshtd
+
+#GSM &GPRS system
+	#gsm version
+	def qgsmfrm(self):
+		c='QGSMFRM//'
+		res = g4ngps.execute_command(self,c)
+		res=res[7:-2]
+		gsmfrm={
+			'gsm_version':res.decode()
+		}
+		return gsmfrm	
+	#gsm vim - master incoming voice call actions
+	def qgsmvim(self):
+		c='QGSMVIM//'
+		res = g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		gsmvim = {}
+		if res == 0:
+			gsmvim['m_vca'] :"disable"
+		elif res == 1:
+			gsmvim['m_vca'] : "trig_pre_command"
+		elif res == 3:
+			gsmvim['m_vca'] : "trig_req_transmission"
+		elif res == 4:
+			gsmvim['m_vca'] : "voice_answer"
+		elif res == 5:
+			gsmvim['m_vca'] : "shutdown_gsm"
+		elif res == 6:
+			gsmvim['m_vca'] : "restart"
+		elif res == 7:
+			gsmvim['m_vca'] : "enable_relay"
+		elif res == 8:
+			gsmvim['m_vca'] : "disable_relay"
+
+		return gsmvim
+	#gsm viu - user incoming voice call actions
+	def qgsmviu(self):
+			c='QGSMVIU//'
+			res = g4ngps.execute_command(self,c)
+			res=int(res[7:-2],16)
+			gsmviu = {}
+			if res == 0:
+				gsmviu['u_vca'] : "disable"
+			elif res == 1:
+				gsmviu['u_vca'] : "trig_pre_command"
+			elif res == 3:
+				gsmviu['u_vca'] : "trig_req_transmission"
+			elif res == 4:
+				gsmviu['u_vca'] : "voice_answer"
+			elif res == 5:
+				gsmviu['u_vca'] : "shutdown_gsm"
+			elif res == 6:
+				gsmviu['u_vca'] : "restart"
+			elif res == 7:
+				gsmviu['u_vca'] : "enable_relay"
+			elif res == 8:
+				gsmviu['u_vca'] : "disable_relay"
+			return gsmviu
+
+
+	#gsm vin unathentificated user call actions
+	def qgsmvin(self):
+		c='QGSMVIN//'
+		res = g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		gsmvin={
+		['u_auth_vca']: None
+		}		
+		if res == 0:
+			gsmvin['u_auth_vca'] : "disable"
+		elif res == 1:
+			gsmvin['u_auth_vca'] : "trig_pre_command"
+		elif res == 3:
+			gsmvin['u_auth_vca'] : "trig_req_transmission"
+		elif res == 4:
+			gsmvin['u_auth_vca'] : "voice_answer"
+		elif res == 5:
+			gsmvin['u_auth_vca'] : "shutdown_gsm"
+		elif res == 6:
+			gsmvin['u_auth_vca'] : "restart"
+		elif res == 7:
+			gsmvin['u_auth_vca'] : "enable_relay"
+		elif res == 8:
+			gsmvin['u_auth_vca'] : "disable_relay"
+		return gsmvin
+
+	def qgsmpdf(self):
+		c = "QGSMPDF//"
+		result = g4ngps.execute_command(self,c)
+		result = result[7:-2]
+
+		gsm = {}
+	
+
+		gsm["predefined_command"] = "" if result == "" else result + "//"
+		
+		res = g4ngps.qsysinf(self)
+		psn = res.get('psn')
+
+		if "bd" == psn:
+			c = "QGPRDMD//"
+			result = g4ngps.execute_command(self,c)
+			result = result[7:-2]
+			result_int = int(result[:2], 16)
+			if result_int == 0x00:
+				gsm["gsm_type"] : "automatic"
+			elif result_int == 0x20:
+				gsm["gsm_type"] : "gsm"
+			elif result_int == 0x40:
+				gsm["gsm_type"] : "lte"
+			elif result_int == 0x60:
+				gsm["gsm_type"] : "gsmlte"
+			else:
+				gsm["gsm_type"] : "automatic"
+				
+			result_int = int(result[2:4], 16)
+			if result_int == 0x00:
+				gsm["lte_mode"] : "catm"
+			elif result_int == 0x40:
+				gsm["lte_mode"] : "nbiot"
+			elif result_int == 0x80:
+				gsm["lte_mode"] : "catmnbiot"
+			else:
+				gsm["lte_mode"] : "catm"
+		else:
+			c = "QGPRSIM//"
+			res = g4ngps.execute_command(self,c)
+
+			# lic_ch = res[7:-2].decode()
+			if "lic" in lic_ch:
+				gsm["dual_sim_licensed"] = False
+				# return gsm
+			else:
+				res_int = int(res[7:-2], 16)
+				if res_int == 0x00:
+					gsm["sim_selector"]:"ext_sim_only"
+				elif res_int == 0x20:
+					gsm["sim_selector"]:"intern_sim_only"
+				elif res_int == 0x40:
+					gsm["sim_selector"]:"intern_sim_ext_not_detected"
+				elif res_int == 0x60:
+					gsm["sim_selector"]:"intern_sim_ext_fails"
+				elif result_int == 0x80:
+					gsm["sim_selector"]:"ext_sim_home_intern_roaming"
+				
+					if res_int == 0x60:
+						c = "QGPRCTH//"
+						result = g4ngps.execute_command(self,c)
+						result = result[7:-2]
+						gsm["external_sim_timeout"] = int(result, 16)
+
+						c = "QGPRIST//"
+						result = g4ngps.execute_command(self,c)
+						result = result[7:-2]
+						gsm["intern_sim_timeout"] = int(result, 16)	
+		return gsm	
+
+	def qgprsim(self):
+		c = "QGPRSIM//"
+		res = g4ngps.execute_command(self,c)
+
+		lic_ch = res[7:-2].decode()
+		gprsim={}
+		if "lic" in lic_ch:
+			gprsim["dual_sim_licensed"] = False
+			# return gprsim
+		else:
+			res_int = int(res[7:-2], 16)
+			if res_int == 0x00:
+				gprsim["sim_selector"]:"ext_sim_only"
+			elif res_int == 0x20:
+				gprsim["sim_selector"]:"intern_sim_only"
+			elif res_int == 0x40:
+				gprsim["sim_selector"]:"intern_sim_ext_not_detected"
+			elif res_int == 0x60:
+				gprsim["sim_selector"]:"intern_sim_ext_fails"
+			elif res_int == 0x80:
+				gprsim["sim_selector"]:"ext_sim_home_intern_roaming"
+			
+				if res_int == 0x60:
+					c = "QGPRCTH//"
+					result = g4ngps.execute_command(self,c)
+					result = result[7:-2]
+					gprsim["external_sim_timeout"] : int(result, 16)
+
+					c = "QGPRIST//"
+					result = g4ngps.execute_command(self,c)
+					result = result[7:-2]
+					gprsim["intern_sim_timeout"] : int(result, 16)	
+		return gprsim	
+
+	def qgprist(self):
+		c = "QGPRIST//"
+		result = g4ngps.execute_command(self,c)
+		result = result[7:-2]
+		gprist={
+		"intern_sim_timeout" : int(result, 16)
+		}
+		return gprist	
+
+	def qgprcth(self):
+		c = "QGPRCTH//"
+		result = g4ngps.execute_command(self,c)
+		result = result[7:-2]
+		gprcth={
+		"external_sim_timeout" : int(result, 16)
+		}
+		return gprcth
+
+#GPS
+	def qgpsset(self):
+		c="QGPSSET//"
+		res=g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		gpsset = {
+			"sbas_enabled": (result & 0x4000 != 0),
+			"gps_updates": (result & 0x2000 != 0),
+			"data_filter": (result & 0x1000 == 0),
+			"inv_pos": (result & 0x0800 == 0),
+			"inv_pos_acc": (result & 0x0400 == 0),
+			"inv_pos_priv_mode": (result & 0x0200 != 0)
+		}
+		return gpsset
+		
+	#gps number of satelites
+	def qgpsefn(self):
+		c="QGPSEFN//"
+		res=g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		gpsefn={
+			"no_sat": res
+		}
+		return gpsefn
+
+	#gps pdop
+	def qgpsefp(self):
+		c="QGPSEFP//"
+		res=g4ngps.execute_command(self,c) 
+		res=res[7:-2]
+		pdop1=res[0:2]
+		pdop2=res[2:]
+		gpsefp={}
+		if pdop2 == 0:
+			gpsefp["pdop"]:pdop1
+		else:
+			gpsefp["pdop"]:pdop1+0.1*pdop2
+		return gpsefp		
+
+	#gps speed	
+	def gpsefs(self):
+		c="QGPSEFS//"
+		res=g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		gpsefs={
+			"gps_speed":res	
+		}	
+		return gpsefs
+
+	def qgpsact(self):
+		c="QGPSACT//"
+		res=g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		gpsact={
+			"gps_accel_thresh":res	
+		}
+		return gpsact
+
+	def qgpsdis(self):
+		c="QGPSDIS"
+		res=g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		gpsdis={
+			"gps_odo":res
+		}	
+		return gpsdis
+
+
 
 #IO system
 	# Volt threshold work-private
 	def qdiowpt(self):
-		self.uart.write("QDIOWPT//")
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read()
-			print(res)
-			result_int = int(res[7:-2],16)
-			print(result_int)
-			result_int = result_int & 0xffff
-			print(result_int)
-			f = result_int * 7.08722 / 1000
-			diowpt={
-				'voltage_threshold': (int(f) + round((f - int(f)) * 10) / 10)
-			}
+		c="QDIOWPT//"
+		res = g4ngps.execute_command(self,c)
+		result_int = int(res[7:-2],16)
+		result_int = result_int & 0xffff
+		f = result_int * 7.08722 / 1000
+		diowpt={
+			'voltage_threshold': (int(f) + round((f - int(f)) * 10) / 10)
+		}
 		return diowpt
 
 
-#GSM system
+
 
 
 
