@@ -1,10 +1,21 @@
-import machine, time, struct, binascii, gc
+import machine, time
 
 class g4ngps:
 
+# 	def __init__(self, port, speed):
+		# self.uart = machine.UART(port, speed)
+
+
 	def __init__(self, port, speed):
-		self.uart = machine.UART(port, speed)
-		self.uart.init(speed, bits=8, parity=None, stop=1)
+		# self.uart = machine.UART(port, speed)
+		# self.uart.init(speed, bits=8, parity=None, stop=1)  #for nonspiram
+		#	self.uart =machine.UART(speed, bits=8, parity=None, stop=1,tx=32,rx=35)
+				# self.uart =machine.UART(port, speed, bits=8, parity=None, stop=1,tx=26,rx=25) #for this we init with gps=g4ngps.g4ngps(1,115200) #board g
+				self.uart =machine.UART(port, speed, bits=8, parity=None, stop=1,tx=32,rx=35) #for this we init with gps=g4ngps.g4ngps(1,115200) #board v
+		# self.uart =machine.UART(port, speed, bits=8, parity=None, stop=1,tx=32,rx=35) issue this is how we ini for not spi gps=g4ngps(1,115200)
+		
+		
+
 
 	def execute_command(self,command):
 		self.uart.write(command)
@@ -13,6 +24,8 @@ class g4ngps:
 			res = self.uart.read()
 			print(res)
 			return res
+		else:
+			print("no UART response")
 
 	def qsysinf(self):
 		self.uart.write('QSYSINF//')
@@ -23,7 +36,7 @@ class g4ngps:
 				'rti': res[7:15],
 				'hhmmss': res[15:21],
 				'ddmmyyyy': res[23:31],
-				'syncage': struct.unpack("<I", binascii.unhexlify(res[31:39]))[0],
+				'syncage': int(res[31:39],16),
 				'psn': res[39:47].decode(),
 				'hwcode': res[47:49],
 				'bootver': res[49:51],
@@ -43,11 +56,11 @@ class g4ngps:
 				'us': res[13:15],
 				'ddmmyyyy': res[15:23],
 				'dow': res[23:25],
-				'uptime': struct.unpack('>I', binascii.unhexlify(res[25:33]))[0],
-				'rtcepoch': struct.unpack('>I', binascii.unhexlify(res[33:51]))[0],
-				'rtclastepoch': struct.unpack('>I', binascii.unhexlify(res[41:49]))[0],
-				'rtcdeltaepoch': struct.unpack('>I', binascii.unhexlify(res[49:57]))[0],
-				'rtcdrift': struct.unpack('>H', binascii.unhexlify(res[57:61]))[0],
+				'uptime': int(res[25:33],16),
+				'rtcepoch': int(res[33:51],16),
+				'rtclastepoch': int(res[41:49],16),
+				'rtcdeltaepoch': int(res[49:57],16),
+				'rtcdrift': int(res[57:61],16),
 				'rtcstatus': res[61:63],
 			}
 			return sysrtc
@@ -87,16 +100,6 @@ class g4ngps:
 			}	 
 			#todo interpret the raw data to get lat/lon corectly
 			return gpsinf
-
-#made a pseudo-read.until / method
-	def read_until(self):
-		res = b''
-		while True:
-			char = self.uart.read(1)
-			if char == b'/':
-				break
-			res += char
-		return res
 
 #auto-complete parameters commands
 	def qacivin(self):
@@ -586,13 +589,13 @@ class g4ngps:
 		res =res[7:-2]
 		qsysppm={
 			'fp_hour1': res[:2].decode() +":"+res[2:4].decode(),
-			'tr_hour2': res[4:6].decode() +":"+res[6:8].decode(),
-			'tr_hour3': res[8:10].decode() +":"+res[10:12].decode(),
-			'tr_hour4': res[12:14].decode() +":"+res[14:16].decode(),
-			'tr_hour5': res[16:18].decode() +":"+res[18:20].decode(),
-			'tr_hour6': res[20:22].decode() +":"+res[22:24].decode(),
-			'tr_hour7': res[24:26].decode() +":"+res[26:28].decode(),
-			'tr_hour8': res[28:30].decode() +":"+res[30:32].decode(),
+			'fp_hour2': res[4:6].decode() +":"+res[6:8].decode(),
+			'fp_hour3': res[8:10].decode() +":"+res[10:12].decode(),
+			'fp_hour4': res[12:14].decode() +":"+res[14:16].decode(),
+			'fp_hour5': res[16:18].decode() +":"+res[18:20].decode(),
+			'fp_hour6': res[20:22].decode() +":"+res[22:24].decode(),
+			'fp_hour7': res[24:26].decode() +":"+res[26:28].decode(),
+			'fp_hour8': res[28:30].decode() +":"+res[30:32].decode(),
 			'fp_hour9': res[32:34].decode() +":"+res[34:36].decode(),
 			'fp_hour10': res[36:38].decode() +":"+res[38:40].decode(),
 			'fp_hour11': res[40:42].decode() +":"+res[42:44].decode(),
@@ -1243,9 +1246,9 @@ class g4ngps:
 				
 			result_int = int(result[2:4], 16)
 			if result_int == 0x00:
-				gsm["lte_mode"] : "catm"
+				gsm["lte_mode"] : 'catm'
 			elif result_int == 0x40:
-				gsm["lte_mode"] : "nbiot"
+				gsm["lte_mode"] : 'nbiot'
 			elif result_int == 0x80:
 				gsm["lte_mode"] : "catmnbiot"
 			else:
@@ -1316,11 +1319,119 @@ class g4ngps:
 					result = result[7:-2]
 					gprsim["intern_sim_timeout"] : int(result, 16)	
 		return gprsim	
+	#read apn info
+	def qgprmct(self):
+		c="QGPRMCT//"
+		res = g4ngps.execute_command(self,c)
+		res = int(res[7:-2],6)
+		res_apn = 0x3000 & res
+		qgprmct={
+			'apn': None
+		}
+		if res_apn == 0x0000:
+			qgprmct["apn"]: "Main"
+		if res_apn == 0x1000:
+			qgprmct["apn"]: "List"
+		if res_apn == 0x2000: 
+			res_apn["apn"]:	"Secondary"	
+		return qgprmct
+	#read main apn
+	def	qgprgma(self):
+		c="QGPRGMA//"
+		res = g4ngps.execute_command(self,c)
+		res = res[7:-2].decode()
+		gprgma={
+			"apn" : res	
+		}	
+		return gprgma
+	#read  main username
+	def qgprgmu(self):
+		c="QGPRGMU//"
+		res = g4ngps.execute_command(self,c)
+		res = res[7:-2].decode()
+		gprgmu={
+			"apn_user" : res	
+		}
+		return gprgmu	
+	#read main pass
+	def qgprgmp(self):
+		c="QGPRGMP//"
+		res = g4ngps.execute_command(self,c)
+		res = res[7:-2].decode()
+		gprgmp={
+			"apn_pass" : res	
+		}
+		return gprgmp
+	#read secondary user
+	def qgprgsu(self):
+		c="QGPRGSU//"
+		res = g4ngps.execute_command(self,c)
+		return res
+	
+	#def read remote peer type
+	def qgprgrs(self):
+		c="QGPRGRS//"
+		res = g4ngps.execute_command(self,c)
+		res= res[7:-2].decode()
+		remote_peer={
+			'remote_peer': res
+		}
+		return remote_peer
+	
+	#def read remote port 
+	def qgprgrp(self):
+		c="QGPRGRP//"
+		res = g4ngps.execute_command(self,c)
+		res= res[7:-2].decode()
+		remote_port={
+			'remote_port': res
+		}
+		return remote_port
+	
+	#def read upgrade peer
+	def qgprgus(self):
+		c="QGPRGUS//"
+		res = g4ngps.execute_command(self,c)
+		res= res[7:-2].decode()
+		gprgus={
+			'update_peer': res
+		}
+		return gprgus
+	#def read upgrade port
+	def qgprgup(self):
+		c="QGPRGUP//"
+		res = g4ngps.execute_command(self,c)
+		res= res[7:-2].decode()
+		gprgup={
+			'update_port': res
+		}
+		return gprgup
+	
+	#read backup peer
+	def qgprgbs(self):
+		c="QGPRGBS//"
+		res = g4ngps.execute_command(self,c)
+		res= res[7:-2].decode()
+		gprgbs={
+			'backup_peer': res
+		}
+		return gprgbs
+	
+		#read backup port
+	def qgprgbp(self):
+		c="QGPRGBS//"
+		res = g4ngps.execute_command(self,c)
+		res= res[7:-2].decode()
+		gprgbp={
+			'backup_port': res
+		}
+		return gprgbp
+
 
 	def qgprist(self):
 		c = "QGPRIST//"
 		result = g4ngps.execute_command(self,c)
-		result = result[7:-2]
+		result = result[7:-2].decode()
 		gprist={
 		"intern_sim_timeout" : int(result, 16)
 		}
@@ -1329,7 +1440,7 @@ class g4ngps:
 	def qgprcth(self):
 		c = "QGPRCTH//"
 		result = g4ngps.execute_command(self,c)
-		result = result[7:-2]
+		result = result[7:-2].decode()
 		gprcth={
 		"external_sim_timeout" : int(result, 16)
 		}
@@ -1341,12 +1452,12 @@ class g4ngps:
 		res=g4ngps.execute_command(self,c)
 		res=int(res[7:-2],16)
 		gpsset = {
-			"sbas_enabled": (result & 0x4000 != 0),
-			"gps_updates": (result & 0x2000 != 0),
-			"data_filter": (result & 0x1000 == 0),
-			"inv_pos": (result & 0x0800 == 0),
-			"inv_pos_acc": (result & 0x0400 == 0),
-			"inv_pos_priv_mode": (result & 0x0200 != 0)
+			"sbas_enabled": (res & 0x4000 != 0),
+			"gps_updates": (res & 0x2000 != 0),
+			"data_filter": (res & 0x1000 == 0),
+			"inv_pos": (res & 0x0800 == 0),
+			"inv_pos_acc": (res & 0x0400 == 0),
+			"inv_pos_priv_mode": (res & 0x0200 != 0)
 		}
 		return gpsset
 		
@@ -1394,7 +1505,7 @@ class g4ngps:
 		return gpsact
 
 	def qgpsdis(self):
-		c="QGPSDIS"
+		c="QGPSDIS//"
 		res=g4ngps.execute_command(self,c)
 		res=int(res[7:-2],16)
 		gpsdis={
@@ -1402,6 +1513,16 @@ class g4ngps:
 		}	
 		return gpsdis
 
+#DLF 
+	#read device memory info
+	def qdiowpt(self):
+		c="QDLFINF//"
+		res = g4ngps.execute_command(self,c)
+		dlfinf={
+			'dlf_records':int(res[7:13],16),
+			'dlf_total_records':int(res[13:19],16)
+		}
+		return dlfinf
 
 
 #IO system
@@ -1416,12 +1537,983 @@ class g4ngps:
 			'voltage_threshold': (int(f) + round((f - int(f)) * 10) / 10)
 		}
 		return diowpt
+	# read accelerometer
+	def qdioacp(self):
+		c="QDIOACP//"
+		res=g4ngps.execute_command(self,c)
+		res=res[7:-2]
+		res1=int(res[0:8],16) 
+		res2=int(res[8:16],16)
+		qdioacp={
+			'enabled':(res1 & 0x80000000 == 0),
+            'antitheft_enabled':(res1 & 0x40000000 != 0),
+            'motionde_tection':(res1 & 0x20000000 != 0),
+            'activate_relay_alarm':(res1 & 0x00800000 != 0),
+            'deactivate_relay_alarm':(res1 & 0x00400000 != 0),
+            'activate_relay_movement':(res1 & 0x00200000 != 0),
+            'deactivate_relay_movement':(res1 & 0x00100000 != 0),
+            'arm_ignition_off':(res1 & 0x00008000 != 0),
+            'disarm_ignition_on':(res2 & 0x80000000 != 0),
+            'disarm_ibutton':(res2 & 0x40000000 != 0),
+		}
+		return qdioacp
 
 
 
+	#arming delay conditions	
+	def qdioard(self):
+		c="QDIOARD//"
+		res=g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		qdioard={
+			"arming_delay":res*0.1 
+		}
+		return qdioard
+	#movement lower treshold
+	def qdioarh(self):
+		c="QDIOARH//"
+		res=g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		qdioarh={
+			'mov_low_thresh': res
+		}
+		return qdioarh
+	#delay movement lower threshold	
+	def qdioart(self):
+		c="QDIOART//"
+		res=g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		qdioart={
+			"arming_delay_mov_low":res*0.1 
+		}
+		return qdioart
+	#movement greater treshold
+	def qdioadt(self):
+		c="QDIOADT//"
+		res=g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		qdioadt={
+			"mov_great_thresh":res
+		}
+		return qdioadt
+	#number of acceleration events threshold
+	def qdiomdh(self):
+		c="QDIOMDH//"
+		res=g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		qdiomdh={
+			'accel_events_thresh':res
+		}
+		return qdiomdh
+	#event threshold
+	def qdiomdh(self):
+		c="QDIOMDT//"
+		res=g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		qdiomdt={
+			'event_thresh':res
+		}
+		return qdiomdt
+	#acceleration decrese rate
+	def qdiomdh(self):
+		c="QDIOMDR//"
+		res=g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		qdiomdr={
+			'event_decrese_rate':res
+		}
+		return qdiomdr
+	#time motion detection threshold
+	def qdiomdo(self):
+		c="QDIOMDO//"
+		res=g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		qdiomdo={
+			'time_motion_det_thresh':res*0.1
+		}
+		return qdiomdo
+	#dio inf
+	def qdioinf(self):
+		c="QDIOINF//"	
+		res=g4ngps.execute_command(self,c)
+		res=res[7:-2]
+		qdioinf={
+			"io_contact": res[71:79],
+			"io_panic": res[79:87],
+			"io_relay": res[87:95],
+			"io_status": res[163:165],
+			"io_status2": res[165:167],
+			"ain1": res[167:171],
+			"ain2": res[171:175],
+			"ain3": res[175:179],
+			"power_in_voltage": res[191:195],
+			"temperature": res[199:203]
+		}
+		return qdioinf
+	#DIOAI read device config
+	def qdioai1(self):	
+		c="QDIOAI1//"
+		res=g4ngps.execute_command(self,c)
+		res=res[7:-2]
+		qdioai1={
+			'IO1':g4ngps.setEntity(self,res)
+		}
+		return qdioai1
+	
+
+	def qdioai2(self):	
+		c="QDIOAI2//"
+		res=g4ngps.execute_command(self,c)
+		res=res[7:-2]
+		qdioai2={
+			'IO2':g4ngps.setEntity(self,res)
+		}
+		return qdioai2
+	
+	def qdioai3(self):	
+		c="QDIOAI13//"
+		res=g4ngps.execute_command(self,c)
+		res=res[7:-2]
+		qdioai3={
+			'IO3':g4ngps.setEntity(self,res)
+		}
+		return qdioai3
+	
+	def qdioai4(self):	
+		c="QDIOAI4//"
+		res=g4ngps.execute_command(self,c)
+		res=res[7:-2]
+		qdioai4={
+			'IO4':g4ngps.setEntity(self,res)
+		}
+		return qdioai4
+	
+	def qdioai5(self):	
+		c="QDIOAI5//"
+		res=g4ngps.execute_command(self,c)
+		res=res[7:-2]
+		qdioai5={
+			'IO5':g4ngps.setEntity(self,res)
+		}
+		return qdioai5
+	
+	def qdioai6(self):
+		c="QDIOAI6//"
+		res=g4ngps.execute_command(self,c)
+		res=res[7:-2]
+		qdioai6={
+			'IO6':g4ngps.setEntity(self,res)
+		}
+		return qdioai6
+
+	def qdioai7(self):
+		c="QDIOAI7//"
+		res=g4ngps.execute_command(self,c)
+		res=res[7:-2]
+		qdioai7={
+			'IO7':g4ngps.setEntity(self,res)
+		}
+		return qdioai7
+
+
+	def qdioai8(self):
+		c="QDIOAI8//"
+		res=g4ngps.execute_command(self,c)
+		res=res[7:-2]
+		qdioai8={
+			'IO8':g4ngps.setEntity(self,res)
+		}
+		return qdioai8
+	
+	def qdioai9(self):
+		c="QDIOAI9//"
+		res=g4ngps.execute_command(self,c)
+		res=res[7:-2]
+		qdioai9={
+			'IO9':g4ngps.setEntity(self,res)
+		}
+		return qdioai9
+	
+	def qdioaia(self):
+		c="QDIOAIA//"
+		res=g4ngps.execute_command(self,c)
+		res=res[7:-2]
+		qdioaia={
+			'IOA':g4ngps.setEntity(self,res)
+		}
+		return qdioaia
+
+	def setEntity(self,data):
+		data=data[0:2].decode()
+		if data == "01":
+			return "CONTACT"
+		elif data == "02":
+			return "PANIC BUTTON"
+		elif data == "03":
+			return "WORK PRIVATE DETECTOR"
+		elif data == "04":
+			return "RELAY"
+		elif data == "05":
+			return "EVENT COUNTER1"
+		elif data == "06":
+			return "EVENT COUNTER2"
+		elif data == "07":
+			return "STATE COUNTER1"
+		elif data == "08":
+			return "state couter2"
+		elif data == "09":
+			return "event generator1"
+		elif data == "0A":
+			return "event generator2"
+		elif data == "0B":
+			return "event ibuttonA"
+		elif data == "0D":
+			return "MotionSensor"
+		elif data == "10":
+			return "ACCELEROMETERSIREN"
+		elif data == "11":
+			return "KLINEINTERFACE"
+		elif data == "12":
+			return "KLINEFUELSENSOR"
+		elif data =="13":
+			return "ARMINGPOSITIVEACCELEROMETER"
+		elif data == "14":
+			return "ARMINGNEGATIVEACCELEROMETER"
+		elif data == "15":
+			return "DISARMINGPOSITIVEACCELEROMETER"
+		elif data =="16":
+			return "DISARMINGNEGATIVEACCELEROMETER"
+		elif data =="17":
+			return "IBUTTONB"
+		elif data =="18":
+			return "BUZZERSIREN"
+		elif data =="19":
+			return "LATCHINGRELAYCOILA"
+		elif data =="1A":
+			return "LATCHINGRELAYCOILB"
+		elif data == "1B":
+			return "TACHO_SIEMENS_DTO1381"
+		elif data =="1C":
+			return "TACHO_SIEMENS_MTCO1324"
+		elif data == "1D":
+			return "TACHO_STONERIDGE_SE5000"
+		elif data == "1E":
+			return "TACHO_STONERIDGE_2400_4800"
+		elif data =="1F":
+			return "TACHO_ACTIA_L2000"
+		elif data == "20":
+			return "WORKPRIVATELED"
+	#dioEntities
+	#read ignition io entity
+	def qdiopco(self):
+		c = "QDIOPCO//"
+		res = g4ngps.execute_command(self,c)
+		res = res[7:-2]
+		res = res[0:4]
+		ig={}
+		if res:
+			result_int = int(res, 16)
+			ig["enabled"] = (result_int & 0x8000) == 0
+			ig["io"] = "todo"
+			ig["sog_derived"] = (result_int & 0x4000) != 0
+			ig["motion_sensor_derived"] = (result_int & 0x2000) != 0
+			ig["accelerometer_movement"] = (result_int & 0x0800) != 0
+			ig["polarity"] = (result_int & 0x0400) != 0
+
+		c = "QDIOPCT//"
+		res = g4ngps.execute_command(self,c)
+		res = res[7:-2]
+		if res:
+			result_int = int(res, 16)
+			result_int = result_int & 0xffff
+			f = result_int * 7.08722 / 1000
+			f = int(f) + round((f - int(f)) * 10) / 10
+			ig["threshold"] = f
+
+		c = "QDIOCSS//"
+		res = g4ngps.execute_command(self,c)
+		res = res[7:-2]
+		ig["speed_threshold"] = int(res)
+
+		c = "QDIOCST//"
+		res = g4ngps.execute_command(self,c)
+		res = res[7:-2]
+		result_int = int(res, 16)
+		ig["time_threshold"] = result_int & 0xffff
+
+		c = "QDIOPCF//"
+		res = g4ngps.execute_command(self, c)
+		res = res[7:-2]
+		i = int(res, 16)
+		f = float(i)
+		ig["filter_threshold"] = f
+
+		return ig
+	#read panic button io entity
+	def qdiopal(self):
+		resInt = 0
+		resLong = 0
+
+		c = "QDIOPAL//"
+
+		res = g4ngps.execute_command(self,c)
+		res = res[7:-2]
+		resLong = int(res, 16)
+
+		pb = {}
+		pb['io'] = "todo"
+		pb['polarity'] = (resLong & 0x20000000) != 0
+		pb['monostable'] = (resLong & 0x10000000) != 0
+		pb['disableRelay'] = (resLong & 0x00800000) != 0
+		pb['stateIgnition'] = (resLong & 0x08000000) != 0
+		pb['panicTimeFilter'] = (resLong & 0x02000000) != 0
+
+		c = "QDIOPAT//"
+		res = g4ngps.execute_command(self,c)
+		res = res[7:-2]
+		resInt = int(res, 16)
+		resInt = resInt & 0xffff
+		f = resInt * 7.08722 / 1000
+		f = int(f) + round((f - int(f)) * 10) / 10
+		pb['threshold'] = f
+
+		c = "QDIOPDR//"
+		res = g4ngps.execute_command(self,c)
+		res = res[7:-2]
+		resInt = int(res, 16)
+
+		pb['duration'] = resInt & 0xffff
+
+		c = "QDIOPAF//"
+		res = g4ngps.execute_command(self,c)
+		res = res[7:-2]
+		resInt = int(res, 16)
+
+		pb['thresholdTimeFilter'] = resInt & 0xffff
+
+		return pb
+	#read relay io entity
+	def qdioprt(self):
+		c="QDIOPRT//"
+		res=g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		rl={}
+		rl['enabled'] = res & 0x80000000 == 0
+		rl['io'] =res #get IO entity
+		rl['polarity'] =res & 0x20000000 != 0
+		rl['mono'] =res & 0x10000000 != 0
+		rl['act_contact_off'] =res & 0x08000000 != 0
+		rl['inact_contact_off'] =res & 0x02000000 != 0
+		rl['act_contact_on'] =res & 0x04000000 != 0
+		rl['inact_contact_on'] =res & 0x01000000 != 0
+		c="QDIOPRP//"
+		res=g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+
+		C="QDIOPRP//"
+		res=g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		res=res & 0xffff
+		if res == 65535:
+			rl['relayPulse'] = None
+		else:
+			rl['relayPulse'] = res
+		return rl
+	#ibu io entity
+	def qibuast(self):
+		c="QIBUAST//"
+
+		res = g4ngps.execute_command(self,c)
+		res = int (res[7:-2],16)
+		ibutton = {}
+		ibutton["io"] = None #get_io_of_entity(ENTITY45.IBUTTONA)
+		ibutton["deac_contact_off"] = (res & 0x20000000) != 0
+		ibutton["deac_contact_on"] = (res & 0x10000000) != 0
+		ibutton["deac_panic_alarm"] = (res & 0x08000000) != 0
+		ibutton["light_on_auth_success"] = (res & 0x04000000) != 0
+		ibutton["light_off_auth_failed"] = (res & 0x02000000) != 0
+		ibutton["led_on_relay_enabled"] = (res & 0x01000000) != 0
+		ibutton["led_off_relay_disabled"] = (res & 0x00800000) != 0
+		ibutton["ignition_ok"] = (res & 0x00008000) != 0
+		ibutton["ignition_failed"] = (res & 0x00004000) != 0
+		ibutton["ignition_ok_timer"] = (res & 0x00002000) != 0
+		ibutton["ignition_failed_timer"] = (res & 0x00001000) != 0
+		ibutton["ok_reset_enable_relay"] = (res & 0x00000800) != 0
+		ibutton["ok_reset_disable_relay"] = (res & 0x00000400) != 0
+		ibutton["fail_reset_enable_relay"] = (res & 0x00000200) != 0
+		ibutton["fail_reset_disable_relay"] = (res & 0x00000100) != 0
+		ibutton["ignition_ok"] = (re & 0x00000080) != 0
+		ibutton["ibu_recog"] = (res & 0x00000040) != 0
+		ibutton["ibu_not_recog"] = (res & 0x00000020) != 0
+
+		c = "QIBULND//"
+		res = g4ngps.execute_command(self,c)
+		res = int(res[7:-2],16)
+
+		duration = res & 0xffff
+		if duration == 255:
+			ibutton["time_light_on_success_auth"] = None
+		else:
+			ibutton["time_light_on_success_auth"] = duration
+		
+		c="QIBULFD//"
+		res = g4ngps.execute_command(self,c)
+		res = int(res[7:-2],16)
+		duration = res & 0xffff
+		if duration == 255:
+			ibutton["time_light_on_failed_auth"] = None
+		else:
+			ibutton["time_light_on_failed_auth"] = duration
+
+		c="QIBUAOT//"
+		res = g4ngps.execute_command(self,c)
+		res = int(res[7:-2],16)
+		ibutton["auth_ok_timer"] =res & 0xffff
+		c="QIBUAFT//"
+		res = g4ngps.execute_command(self,c)
+		res = int(res[7:-2],16)
+		ibutton["auth_fail_timer"] =res & 0xffff
+
+		return ibutton
+	
+	#read input power
+	def qdiovlt(self):
+		c="QDIOVLT//"
+		res = g4ngps.execute_command(self,c)
+		res = int(res[7:-2],16)
+		res = res & 0xffff
+		f=	res * 7.08722 / 1000
+		f = int(f) + round((f - int(f)) * 10) / 10
+		diovolt={}
+		diovolt["un_volt_thresh"] = f
+		c="QDIOVHT//"
+		res = g4ngps.execute_command(self,c)
+		res = int(res[7:-2],16)
+		res = res & 0xffff
+		f=	res * 7.08722 / 1000
+		f = int(f) + round((f - int(f)) * 10) / 10
+		diovolt["ov_volt_thresh"] =f
+		return diovolt
+	#read event counter 1 dio entity
+	def qdioeco1(self):
+		c="QDIOECO//"
+		res = g4ngps.execute_command(self,c)
+		res = res[7:-2]
+		res = int(res[0:4],16)
+
+		ev_count1={}
+		ev_count1["set_io"] = None #implement this
+		ev_count1["edge_trigg"] = res & 0x4000 != 0
+		ev_count1["edge_filter"] = res & 0x2000 != 0
+		c="QDIOE1F//"
+		res = g4ngps.execute_command(self,c)
+		res = int(res[7:-2],16)
+		ev_count1["filter_thresh"] = (res & 0xffff) / 100
+		c="QDIOE1L//"
+		res = g4ngps.execute_command(self,c)
+		res = int(res[7:-2],16)
+		res = res & 0xffff
+		f= res* 7.08722 / 1000
+		f = int(f) + round((f - int(f)) * 10) / 10
+		ev_count1["level_thresh"] =f
+
+		return ev_count1
+	#read event counter 2 dio entity
+	def qdioeco2(self):
+		c="QDIOECO//"
+		res = g4ngps.execute_command(self,c)
+		res = res[7:-2]
+		res = int(res[4:8],16)
+
+		ev_count2={}
+		ev_count2["set_io"] = None #implement this
+		ev_count2["edge_trigg"] = res & 0x4000 != 0
+		ev_count2["edge_filter"] = res & 0x2000 != 0
+		c="QDIOE2F//"
+		res = g4ngps.execute_command(self,c)
+		res = int(res[7:-2],16)
+		ev_count2["filter_thresh"] = (res & 0xffff) / 100
+		c="QDIOE2L//"
+		res = g4ngps.execute_command(self,c)
+		res = int(res[7:-2],16)
+		res = res & 0xffff
+		f= res* 7.08722 / 1000
+		f = int(f) + round((f - int(f)) * 10) / 10
+		ev_count2["level_thresh"] =f
+
+		return ev_count2
+	#read state counter 1 dio entity
+	def qdiosco1(self):
+		c="QDIOSCO//"
+		res = g4ngps.execute_command(self,c)
+		res = res[7:-2]
+		res = int(res[0:4],16)
+		state_count1={}
+		state_count1["set_io"]= None #todo
+		state_count1["edge_trigg"] = res & 0x4000 != 0
+		c="QDIOS1L//"
+		res = g4ngps.execute_command(self,c)
+		res = int(res[7:-2],16)
+		res = res & 0xffff
+		f= res* 7.08722 / 1000
+		f = int(f) + round((f - int(f)) * 10) / 10
+		state_count1["level_thresh"] =f
+	
+		return state_count1
+	#read state counter2 dio entity
+	def qdiosco2(self):
+		c="QDIOSCO//"
+		res = g4ngps.execute_command(self,c)
+		res = res[7:-2]
+		res = int(res[0:4],16)
+		state_count2={}
+		state_count2["set_io"]= None #todo
+		state_count2["edge_trig"] = res & 0x4000 != 0
+		c="QDIOS2L//"
+		res = g4ngps.execute_command(self,c)
+		res = int(res[7:-2],16)
+		res = res & 0xffff
+		f= res* 7.08722 / 1000
+		f = int(f) + round((f - int(f)) * 10) / 10
+		state_count2["level_thresh"] =f
+	
+		return state_count2
+	#read event generator2
+	def qdioego1(self):
+		c="QDIOEGO//"
+		res = g4ngps.execute_command(self,c)
+		res = res[7:-2]
+		res = int(res[0:4],16)
+		qev_gen1=[]
+		qev_gen1["set_io"]=None
+		qev_gen1["edge_trig"]=(res & 0x4000) != 0
+		return qev_gen1
+	
+	def qdioego2(self):
+		c="QDIOEGO//"
+		res = g4ngps.execute_command(self,c)
+		res = res[7:-2]
+		res = int(res[4:8],16)
+		qev_gen2=[]
+		qev_gen2["set_io"]=None
+		qev_gen2["edge_trig"]=(res & 0x4000) != 0
+		return qev_gen2
+	
+	def qdiomts(self):
+		result_int = 0
+		result_long = 0
+		ms = {}
+	
+		commands = ["QDIOMTS//", "QDIOMTT//", "QDIOMIT//", "QDIOMFT//", "QDIOMFC//"]
+		results = [g4ngps.execute_command(self,cmd) for cmd in commands]
+		results = [res[7:-2] for res in results]
+		
+		result_long = int(results[0], 16)
+		ms['io'] = None #"todo"
+		ms['relay'] = (result_long & 0x40000000) != 0
+		
+		result_int = int(results[1], 16) & 0xffff
+		f = result_int * 7.08722 / 1000
+		ms['threshold'] = int(f) + round((f - int(f)) * 10) / 10
+
+		result_int = int(results[2], 16) & 0xffff
+		ms['idle_timer'] = result_int / 100
+
+		result_int = int(results[3], 16) & 0xffff
+		ms['filter_timer'] = result_int / 100
+
+		result_int = int(results[4], 16) & 0xffff
+		ms['threshold_filter_counter'] = result_int & 0xffff
+	
+		return ms
+
+#read buzzer
+	def qdiobuz(self):
+
+		buzzer2 = {}
+		cmd = ["QALMOVB//", "QIBUNAB//", "QIBUAST//", "QIBAKAB//", "QIBAFAB//"]
+		res = [g4ngps.execute_command(self, c)[7:-2] for c in cmd]
+		if res[0].upper() == "C1A0":
+			buzzer2["activ_over_speed_alm"] = True
+		if res[1].upper() == "C3AA" and int(res[2], 16) & int("00000080", 16) != 0:
+			buzzer2["activ_ign_on_ibut_notauth"] = True
+		if res[3].upper() == "81AA" and int(res[2], 16) & int("00000040", 16) != 0:
+			buzzer2["activ_ibut_auth"] = True
+		if res[4].upper() == "82F8" and int(res[2], 16) & int("00000020", 16) != 0:
+			buzzer2["activ_ibut_notrec"] = True
+		else:
+			buzzer2["activ_ibut_notrec"] = False
+
+		buzzer2["use_use_int_buz"] = (int(res[2], 16) & 0x4000) != 0
+		return buzzer2
+#read dvb behavior
+	def qdvbset(self):
+		command = "QDVBSET//"
+		result = g4ngps.execute_command(self,command)
+		result = result[7: -2]
+		d_b = {}
+
+		result_int = int(result[0:4], 16)
+		d_b["enabled"] = (result_int & 0x8000) == 0
+
+		acc_brake_ds = result_int & 0x0070
+		d_b["acc_brake_data_source"] = acc_brake_ds == 0 and 1 or None
+
+		analysis_interval = result_int & 0x0007
+		d_b["analysis_interval"] = {0: 1, 1: 2, 2: 3, 3: 4, 4: 5, 5: 6, 6: 7, 7: 8}.get(analysis_interval, None)
+
+		result_int = int(result[4:8], 16)
+		harsh_cornering = result_int & 0x7000
+		d_b["cornering_data_source"] = harsh_cornering == 0 and 1 or None
+
+		commands = [("QDVBIAB//", "interval_ab_speed_threshold"),
+					("QDVBIBC//", "interval_bc_speed_threshold"),
+					("QDVBICD//", "interval_cd_speed_threshold"),
+					("QDVBGAA//", "interval_a_accel_threshold"),
+					("QDVBGAB//", "interval_b_accel_threshold"),
+					("QDVBGAC//", "interval_c_accel_threshold"),
+					("QDVBGAD//", "interval_d_accel_threshold"),
+					("QDVBGBA//", "interval_ab_brake_threshold"),
+					("QDVBGBB//", "interval_bc_brake_threshold"),
+					("QDVBGBC//", "interval_cd_brake_threshold")]
+
+		for cmd, attr in commands:
+			result = g4ngps.execute_command(self,cmd)
+			result = result[7: -2]
+			result_int = int(result, 16)
+			value = result_int % 10 >= 5 and (result_int / 10 + 1) or (result_int / 10)
+			d_b[attr] = value
+
+		return d_b
+
+	#readtcoinfo
+	def qtcoins(self):
+		tco = {}
+		commands = ["QTCOINS//", "QTCOIVH//", "QTCORTC//"]
+		results = [g4ngps.execute_command(self, command) for command in commands]
+
+		result = results[0][7:-2][:2]
+		if result:
+			result_int = int(result, 16)
+			tco["enabled"] = True if (result_int & 0x80) == 0 else False
+
+		result = results[1][7:-2]
+		if result and result != "ERR":
+			vehicle_settings = result.split(",")
+			try:
+				tco["VIN"] = vehicle_settings[0]
+				tco["VRN"] = vehicle_settings[1].strip()
+				tco["KFactor"] = str(int(vehicle_settings[2], 16))
+			except Exception:
+				pass
+
+		result = results[2][7:-2]
+		if result:
+			try:
+				result_drift_epoch = int(result[:4], 16)
+				tco["TCODriftEpoch"] = result_drift_epoch
+			except Exception:
+				pass
+
+			try:
+				result_total_offset = int(result[4:8], 16)
+				tco["TCOTotalOffset"] = result_total_offset
+			except Exception:
+				pass
+
+			try:
+				result_tco_panel = int(result[8:16], 16)
+				tco["TCOPanelEpoch"] = result_tco_panel
+
+				TCOType = bin(int(result[-4:], 16))[2:]
+				tco["TCOType"] = TCOType[8:12]
+				ControlBits = TCOType[12:16]
+
+				tco["TcoIgnitionBit0"] = True if ControlBits[0] == "1" else False
+				tco["EngineRPMBit1"] = True if ControlBits[1] == "1" else False
+				tco["TcoCalibrationErrorBit2"] = True if ControlBits[2] == "1" else False
+				tco["TcoTimeErrorBit3"] = True if ControlBits[3] == "1" else False
+			except Exception:
+				pass
+
+		return tco
+
+	#read Led panel
+	def qpaninf(self):
+		cmds = ["QPANINF//", "QPANSET//", "QPANOVS//", "QPANHBA//", "QPANGPI//", "QPANSEO//", "QPANFCI//"]
+		led = {}
+		for cmd in cmds:
+			result = g4ngps.execute_command(self, cmd)
+			if cmd == "QPANINF//":
+				led_number = int(result[31:33][1:2])
+				led["total_led"] = led_number
+				led_panel_enabled = int(result[7:9], 16)
+				led["enabled"] = (bin(led_panel_enabled)[2:].zfill(8)[0] != "1")
+			elif cmd == "QPANSET//":
+				result_long = int(result[7:-2][:8], 16)
+				led["enabled"] = (result_long & 0x80000000) == 0
+				led["led_off_when_ignition_off"] = (result_long & 0x40000000) != 0
+				led["adaptive_light_intensity"] = (result_long & 0x20000000) != 0
+				led["io1_pull_up"] = (result_long & 0x00800000) != 0
+				led["io3_pull_down"] = (result_long & 0x00400000) != 0
+				led["io2_pull_down"] = (result_long & 0x00200000) != 0
+				led["uart_enable"] = (result_long & 0x00100000) != 0
+				led["bit3"] = (result_long & 0x0008000) != 0
+				led["bit2"] = (result_long & 0x0004000) != 0
+				led["bit1"] = (result_long & 0x0002000) != 0
+				led["bit0"] = (result_long & 0x0001000) != 0
+				led["light_level_threshold2"] = (result_long & 0x0000080) != 0
+				led["light_level_threshold1"] = (result_long & 0x00000010) != 0
+			else:
+				result = int(result[7:-2], 16)
+				if result != 0 and result <= led["total_led"]:
+					if cmd == "QPANOVS//":
+						led["overspeed"] = True
+						led["overspeed_number"] = result
+					elif cmd == "QPANHBA//":
+						led["harsh_breaking"] = True
+						led["harsh_breaking_number"] = result
+					elif cmd == "QPANGPI//":
+						led["gps_indicator"] = True
+						led["gps_indicator_number"] = result
+					elif cmd == "QPANSEO//":
+						led["stationary_engine_on"] = True
+						led["stationary_engine_on_number"] = result
+					elif cmd == "QPANFCI//":
+						led["first_crash_indicator"] = True
+						led["first_crash_indicator_number"] = result
+		return led
+
+	#read canlog
+	def qclgset(self):
+		cmd = "QCLGSET//"
+		result = g4ngps.execute_command(self,cmd)
+		result = result[7:-2]
+
+		canlog={}
+		result_int = int(result[:4], 16)
+		canlog["can_log.enabled"] = (result_int & 0x8000 == 0)
+
+		cmd = "QCLGPFN//"
+		result = g4ngps.execute_command(self,cmd)
+		canlog["can_log.profile_name"] = result[7:-2].decode()
+
+		try:
+			cmd = "QCLGSCP//"
+			result = g4ngps.execute_command(self,cmd)
+			if result == "":
+				return canlog
+			result = result[7:-2]
+			if result.decode() != "ERR":
+				result = result[6:8] + result[4:6] + result[2:4] + result[0:2]
+				canlog["can_log.profile_code"] = int(result, 16)
+		except ( IOError) as e:
+			#no profile installed
+			pass
+
+		return canlog
+	#read fuel measurement
+	def fuelmeasurement(self):
+		fuel_m={}
+		fuel_m['qfueset'] = g4ngps.qfueset(self)
+		fuel_m['qfuetac'] = g4ngps.qfuetac(self)
+		fuel_m['qfuespi'] = g4ngps.qfuespi(self)
+		fuel_m['qfuefrt'] = g4ngps.qfuefrt(self)
+		fuel_m['qfuefrv'] = g4ngps.qfuefrv(self)
+		return fuel_m
+
+	def qfueset(self):
+		cmd = "QFUESET//"
+		result = g4ngps.execute_command(self, cmd)
+		result = result[7:-2]
+		result_int = int(result[:4], 16)
+		enabled = (result_int & 0x8000) == 0
+		return {"enabled": enabled}
+
+	def qfuetac(self):
+		cmd = "QFUETAC//"
+		result = g4ngps.execute_command(self, cmd)
+		result = result[7:-2]
+		if result:
+			tank_volume = int(result, 16) / 10
+			return {"tank_volume": tank_volume}
+		return {}
+
+	def qfuespi(self):
+		cmd = "QFUESPI//"
+		result = g4ngps.execute_command(self, cmd)
+		result = result[7:-2]
+		if result:
+			speed_int_A_limit = int(result[:4], 16) / 10
+			speed_int_B_limit = int(result[4:8], 16) / 10
+			speed_int_C_limit = int(result[8:12], 16) / 10
+			return {
+				"speed_int_A_limit": speed_int_A_limit,
+				"speed_int_B_limit": speed_int_B_limit,
+				"speed_int_C_limit": speed_int_C_limit
+			}
+		return {}
+
+	def qfuefrt(self):
+		cmd = "QFUEFRT//"
+		result = g4ngps.execute_command(self, cmd)
+		result = result[7:-2]
+		if result:
+			fuel_rates = {}
+			if result[:4].upper().decode() != "FFFF":
+				fuel_rates["idle_fuel_rate"] = int(result[:4], 16) / 1820.4
+			if result[4:8].upper().decode() != "FFFF":
+				fuel_rates["int_A_fuel_rate"] = int(result[4:8], 16) / 65.536
+			if result[8:12].upper().decode() != "FFFF":
+				fuel_rates["int_B_fuel_rate"] = int(result[8:12], 16) / 65.536
+			if result[12:16].upper().decode() != "FFFF":
+				fuel_rates["int_C_fuel_rate"] = int(result[12:16], 16) / 65.536
+			return fuel_rates
+		return fuel_rates
+
+	def qfuefrv(self):
+		cmd = "QFUEFRV//"
+		result = g4ngps.execute_command(self, cmd)
+		result = result[7:-2]
+		if result:
+			fuel_counters = {}
+			if result[:8].upper().decode() != "FFFFFFFF":
+				fuel_counters["fuel_counter_total"] = int(result[:8], 16) / 100
+		return fuel_counters
+#record 10x
+	def qacqhgp(self):
+		c="QACQHGP//"
+		return g4ngps.qacq_rec10_gp(self,c)
+	def qacqrgp(self):
+		c="QACQRGP//"
+		return g4ngps.qacq_rec10_gp(self,c)
+	def qacqhti(self):
+		c="QACQHTI//"
+		return g4ngps.qacq_rec10_ti(self,c)
+	def qacqrti(self):
+		c="QACQRTI//"
+		return g4ngps.qacq_rec10_ti(self,c)
+	def qacqhtx(self):
+		c="QACQHTX//"
+		return g4ngps.qacq_rec10_tx(self,c)
+	def qacqrtx(self):
+		c="QACQRTX//"
+		return g4ngps.qacq_rec10_tx(self,c)
+	def qacqhss(self):
+		c="QACQHSS//"
+		return g4ngps.qacq_rec10_hs(self,c)
+	def qacqrss(self):
+		c="QACQRSS//"
+		return g4ngps.qacq_rec10_hs(self,c)
+	def qacqhgi(self):
+		c="QACQHGI//"
+		return g4ngps.qacq_rec10_gi(self,c)
+	def qacqrgi(self):
+		c="QACQRGI//"
+		return g4ngps.qacq_rec10_gi(self,c)
+
+	#generates the record 10 by calling its relevant methods
+	def record10_local_net(self):
+		rec10={}
+		rec10['qacqhgp'] = g4ngps.qacqhgp(self)
+		rec10['qacqhti'] = g4ngps.qacqhti(self)
+		rec10['qacqhtx'] = g4ngps.qacqhtx(self)
+		rec10['qacqhss'] = g4ngps.qacqhss(self)
+		rec10['qacqhgi'] = g4ngps.qacqhgi(self)
+		return rec10
+	
+	def qacq_rec10_gp(self, c):
+		res= g4ngps.execute_command(self,c)
+		res= int(res[7:-2],16)
+
+		acq_rec10_gp={
+			"acq": (res & 0x80000000) == 0,
+			"cog_acq": (res & 0x40000000) != 0,
+			"cog_acq_cnt_on": (res & 0x20000000) != 0,
+			"cog_acq_ovrspd": (res & 0x10000000) != 0,
+			"cnt_acq": (res & 0x08000000) != 0,
+			"acq_int_a": (res & 0x04000000) != 0,
+			"acq_int_a_cnt_on": (res & 0x02000000) != 0,
+			"acq_int_a_ovrspd": (res & 0x01000000) != 0,
+			"alarm_acq": (res & 0x00800000) != 0,
+			"gps_val_acq": (res & 0x00400000) != 0,
+			"acq_int_b_cnt_on": (res & 0x00200000) != 0,
+			"acq_int_b_cnt_off": (res & 0x00100000) != 0,
+			"rec_reset": (res & 0x00080000) != 0,
+			"gen_trn_aft_acq": (res & 0x00040000) != 0
+		}
+		return acq_rec10_gp
+
+	def qacq_rec10_ti(self, c):
+		res= g4ngps.execute_command(self,c)
+		res= int(res[7:-2],16)
+		acq_rec10_ti={
+			"acq_cog_min_time": (res & 0xffff) / 10,
+		}
+		return acq_rec10_ti
+	
+	def qacq_rec10_tx(self,c):
+		res= g4ngps.execute_command(self,c)
+		res= int(res[7:-2],16)
+		acq_rec10_tx={
+			"acq_cog_max_time": (res & 0xffff) / 10,	
+		}
+		return acq_rec10_tx
+	
+	def qacq_rec10_hs(self,c):
+		res= g4ngps.execute_command(self,c)
+		res= int(res[7:-2],16)
+		acq_rec10_hs={
+			"acq_cog_min_sog": (res & 0xffff) / 10,	
+		}
+		return acq_rec10_hs
+
+	def qacq_rec10_gi(self,c):
+		res=g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		acq_rec10_gi={
+			"acq_int_A" : (res & 0xffff) /10
+		}
+		return acq_rec10_gi
+	
+	def qacq_rec10_gb(self,c):
+		res=g4ngps.execute_command(self,c)
+		res=res[7:-2]
+		acq_rec10_gi={}
+		if res[:3].decode == "UNK":
+			acq_rec10_gi["acq_int_B"] : False
+		else:	
+			res=int(res,16)
+			acq_rec10_gi["acq_int_B"] : (res & 0xffff) /10
+		
+		return acq_rec10_gi
+	
+	def qacqhsp(self):
+		c="QACQHSP//"
+		return g4ngps.acq_rec11_sp(self,c)
+	def qacqrsp(self):
+		c="QACQRSP//"
+		return g4ngps.acq_rec11_sp(self,c)
+
+
+	def acq_rec11_sp(self, c):
+		res= g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+
+		acqhsp={
+			"acquisition": (res & 0x80000000) == 0,
+			"contact_state": (res & 0x40000000) != 0,
+			"preset_interval": (res & 0x20000000) != 0,
+			"contact_on": (res & 0x10000000) != 0,
+			"alarm_on": (res & 0x08000000) != 0,
+			"alarm_changing": (res & 0x04000000) != 0,
+			"gen_trans_after_acq": (res & 0x02000000) != 0
+		}
+		return acqhsp
 
 
 
-
-#INIT
-gps=g4ngps(2,115200)
+# #INIT for no spi
+# gps=g4ngps(2,115200)
+# INIT for wrover nightly build
+# gps=g4ngps.g4ngps(1,115200
