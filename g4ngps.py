@@ -2764,27 +2764,7 @@ class g4ngps:
 		rec1e={}
 		rec1e["qacqhdw"] = g4ngps.qacqhdw(self)
 		return rec1e
-	def record1EF_roam_net(self):
+	def record1F_roam_net(self):
 		rec1e={}
 		rec1e["qacqrdw"] = g4ngps.qacqrdw(self)
-		return rec1e	
-
-
-
-
-
-
-
-
-	
-	
-	
-
-
-
-
-
-# #INIT for no spi
-# gps=g4ngps(2,115200)
-# INIT for wrover nightly build
-# gps=g4ngps.g4ngps(1,115200
+		return rec1e
