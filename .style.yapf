@@ -1,5 +1,5 @@
 [style]
-based_on_style = yapf
+based_on_style = pep8 
 use_tabs = true
 continuation_align_style = fixed 
 column_limit = 120
