@@ -2412,7 +2412,7 @@ class g4ngps:
 		c="QACQRGI//"
 		return g4ngps.qacq_rec10_gi(self,c)
 
-	#generates the record 10 by calling its relevant methods
+	#generates the record 0x10 by calling its relevant methods
 	def record10_local_net(self):
 		rec10={}
 		rec10['qacqhgp'] = g4ngps.qacqhgp(self)
@@ -2420,6 +2420,14 @@ class g4ngps:
 		rec10['qacqhtx'] = g4ngps.qacqhtx(self)
 		rec10['qacqhss'] = g4ngps.qacqhss(self)
 		rec10['qacqhgi'] = g4ngps.qacqhgi(self)
+		return rec10
+	def record10_local_roam(self):
+		rec10={}
+		rec10['qacqrgp'] = g4ngps.qacqrgp(self)
+		rec10['qacqrti'] = g4ngps.qacqrti(self)
+		rec10['qacqrtx'] = g4ngps.qacqrtx(self)
+		rec10['qacqrss'] = g4ngps.qacqrss(self)
+		rec10['qacqrgi'] = g4ngps.qacqrgi(self)
 		return rec10
 	
 	def qacq_rec10_gp(self, c):
@@ -2487,21 +2495,49 @@ class g4ngps:
 			acq_rec10_gi["acq_int_B"] : (res & 0xffff) /10
 		
 		return acq_rec10_gi
-	
+	#record 0x11_commands
 	def qacqhsp(self):
 		c="QACQHSP//"
 		return g4ngps.acq_rec11_sp(self,c)
 	def qacqrsp(self):
 		c="QACQRSP//"
 		return g4ngps.acq_rec11_sp(self,c)
+	def qacqhsi(self):
+		c="QACQHSI//"
+		return g4ngps.acq_rec11_si(self,c)
+	def qacqrsi(self):
+		c="QACQRSI//"
+		return g4ngps.acq_rec11_si(self,c)
+	
+	#read the settings for record 0x11 by calling the relevant methods
+	def record11_local_net(self):
+		rec11={}
+		rec11['qacqhsp'] = g4ngps.qacqhsp(self)
+		rec11['qacqhsi'] = g4ngps.qacqhsi(self)
 
+		return rec11
+	def record11_roam_net(self):
+		rec11={}
+		rec11['qacqrsp'] = g4ngps.qacqrsp(self)
+		rec11['qacqrsi'] = g4ngps.qacqrsi(self)
+
+		return rec11
+
+	def acq_rec11_si(self,c):
+		res=g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+
+		acq_si={
+			"acq_interval": (res & 0xffff) /10
+		}
+		return acq_si
 
 	def acq_rec11_sp(self, c):
 		res= g4ngps.execute_command(self,c)
 		res=int(res[7:-2],16)
 
-		acqhsp={
-			"acquisition": (res & 0x80000000) == 0,
+		acq_sp={
+			"acq_enable": (res & 0x80000000) == 0,
 			"contact_state": (res & 0x40000000) != 0,
 			"preset_interval": (res & 0x20000000) != 0,
 			"contact_on": (res & 0x10000000) != 0,
@@ -2509,7 +2545,463 @@ class g4ngps:
 			"alarm_changing": (res & 0x04000000) != 0,
 			"gen_trans_after_acq": (res & 0x02000000) != 0
 		}
-		return acqhsp
+		return acq_sp
+	#record 0x12 commands
+
+	def qacqhcp(self):
+		c="QACQHCP//"
+		return g4ngps.acq_rec12_cp(self,c)
+	def qacqrcp(self):
+		c="QACQRCP//"
+		return g4ngps.acq_rec12_cp(self,c)
+	def qacqhci(self):
+		c="QACQHCI//"
+		return g4ngps.acq_rec12_ci(self,c)
+	def qacqrci(self):
+		c="QACQRCI//"
+		return g4ngps.acq_rec12_ci(self,c)
+	
+	#read the settings for record 0x12 by calling the relevant methods
+	def record12_local_net(self):
+		rec12={}
+		rec12['qacqhcp'] = g4ngps.qacqhcp(self)
+		rec12['qacqhci'] = g4ngps.qacqhci(self)
+
+		return rec12
+	def record12_roam_net(self):
+		rec12={}
+		rec12['qacqrcp'] = g4ngps.qacqrcp(self)
+		rec12['qacqrci'] = g4ngps.qacqrci(self)
+
+		return rec12
+
+	def acq_rec12_ci(self,c):
+		res=g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+
+		acq_ci={
+			"acq_interval": (res & 0xffff)
+		}
+		return acq_ci
+
+	def acq_rec12_cp(self, c):
+		res= g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+
+		acq_cp={
+			"acq_enable": ((res & 0x80000000) == 0),
+			"contact_state": ((res & 0x40000000) != 0),
+			"interval_acquisition": ((res & 0x20000000) != 0),
+			"contact_on": ((res & 0x10000000) != 0),
+			"contact_off": ((res & 0x08000000) != 0),
+			"work_private": ((res & 0x04000000) != 0),
+			"gen_trans_after_acq": ((res & 0x02000000) != 0)
+		}
+		return acq_cp
+	#record 0x13 commands
+	def qacqhrp(self):
+		c="QACQHRP//"
+		return g4ngps.acq_rec13_rp(self,c)
+
+	def qacqrrp(self):	
+		c="QACQHRP//"
+		return g4ngps.acq_rec13_rp(self,c)
+	
+
+	def acq_rec13_rp(self,c):
+		res=g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		acq_rp = {
+		'acquisition': (res & 0x80000000) == 0,
+		'daily_acq': (res & 0x40000000) != 0,
+		'monthly_acq': (res & 0x20000000) != 0,
+		'gen_trans_after_acq': (res & 0x10000000) != 0
+		}
+		return acq_rp
+	def record13_local_net(self):
+		rec13={}
+		rec13['qacqhrp'] = g4ngps.qacqhrp(self)
+		return rec13
+	def record13_roam_net(self):
+		rec13={}
+		rec13['qacqrrp'] = g4ngps.qacqrrp(self)
+		return rec13
+	#record 0x14 commands
+	def qacqhmp(self):
+		c="QACQHMP//"
+		return g4ngps.acq_rec14_mp(self,c)
+
+	def qacqrmp(self):	
+		c="QACQHMP//"
+		return g4ngps.acq_rec14_mp(self,c)
+	
+
+	def acq_rec14_mp(self,c):
+		res=g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		acq_mp = {
+			"ignition_change": (res & 0x40000000) != 0,
+			"mccmnc_change": (res & 0x20000000) != 0,
+			"lac_change": (res & 0x10000000) != 0,
+			"cid_change": (res & 0x08000000) != 0,
+			"gsm_registered_change": (res & 0x04000000) != 0,
+			"roaming_status_change": (res & 0x02000000) != 0,
+			"gen_trans_after_acq": (res & 0x01000000) != 0,
+		}
+		return acq_mp
+	def record14_local_net(self):
+		rec14={}
+		rec14['qacqmrp'] = g4ngps.qacqhmp(self)
+		return rec14
+	def record14_roam_net(self):
+		rec14={}
+		rec14['qacqmrp'] = g4ngps.qacqrmp(self)
+		return rec14
+	#record 0x15 commands
+	def qacqhdp(self):
+		c="QACQHDP//"
+		return g4ngps.acq_rec15_dp(self,c)
+	def qacqrdp(self):
+		c="QACQRDP//"
+		return g4ngps.acq_rec15_dp(self,c)
+	def qacqhip(self):
+		c="QACQHIP//"
+		return g4ngps.acq_rep15_ip(self,c)
+	def qacqrip(self):
+		c="QACQRIP//"
+		return g4ngps.acq_rep15_ip(self,c)
+	def acq_rec15_dp(self,c):
+		res=g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		acq_dp = {
+		'acq_enabled': (res & 0x80000000) == 0,
+		'contact_state': (res & 0x40000000) != 0,
+		'work_private': (res & 0x20000000) != 0,
+		'interval_acquisition': (res & 0x10000000) != 0,
+		'contact_on': (res & 0x08000000) != 0,
+		'contact_off': (res & 0x04000000) != 0,
+		'gen_trans_after_acq': (res & 0x02000000) != 0
+		}
+		return acq_dp
+	def acq_rep15_ip(self,c):
+		res=g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		acq_dp={
+			"acq_interval": (res & 0xffff)
+		}
+		return acq_dp
+	def record15_local_net(self):
+		rec15={}
+		rec15['qacqhdp'] = g4ngps.qacqhdp(self)
+		rec15['qacqhip'] = g4ngps.qacqhip(self)
+		return rec15
+	def record15_roam_net(self):
+		rec15={}
+		rec15['qacqrdp'] = g4ngps.qacqrdp(self)
+		rec15['qacqrip'] = g4ngps.qacqrip(self)
+		return rec15
+	#record 0x16 commands
+	def qacqhia(self):
+		c="QACQHIA//"
+		return g4ngps.acq_rec16_ia(self,c)
+	def qacqria(self):
+		c="QACQRIA//"
+		return g4ngps.acq_rec16_ia(self,c)
+	def acq_rec16_ia(self, c):
+		res=g4ngps.execute_command(self,c)
+		if res[7:-2].decode()=="LIC":
+			return "No License"
+		else:
+			res=int(res[7:-2],16)
+			acq_ia = {
+			"acq_enable": (res & 0x80000000) == 0,
+			"contact": (res & 0x40000000) != 0,
+			"gen_trans_after_acq": (res & 0x20000000) != 0
+			}
+			return acq_ia
+	def record16_local_net(self):
+		rec16={}
+		rec16["qacqhia"] = g4ngps.qacqhia(self)
+		return rec16
+	def record16_roam_net(self):
+		rec16={}
+		rec16["qacqria"] = g4ngps.qacqria(self)
+		return rec16
+	#record 0x17 commands
+	def qacqhib(self):
+		c="QACQHIB//"
+		return g4ngps.acq_rec16_ib(self,c)
+	def qacqrib(self):
+		c="QACQRIB//"
+		return g4ngps.acq_rec16_ib(self,c)
+	def acq_rec16_ib(self, c):
+		res=g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		acq_ib = {
+		"acq_enable": (res & 0x80000000) == 0,
+		}
+		return acq_ib
+	def record17_local_net(self):
+		rec17={}
+		rec17["qacqhib"] = g4ngps.qacqhib(self)
+		return rec17
+	def record17_roam_net(self):
+		rec17={}
+		rec17["qacqrib"] = g4ngps.qacqrib(self)
+		return rec17
+		#record 0x19 commands
+	def qacqhpr(self):
+		c="QACQHPR//"
+		return g4ngps.acq_rec19_pr(self,c)
+	def qacqrpr(self):
+		c="QACQRPR//"
+		return g4ngps.acq_rec19_pr(self,c)
+	def acq_rec19_pr(self, c):
+		res=g4ngps.execute_command(self,c)
+		if res[7:-2].decode()=="LIC":
+			return "No License"
+		else:
+			res=int(res[7:-2],16)
+			acq_pr = {
+				"acq_enable": ((res & 0x80000000) == 0),
+				"param_changed": ((res & 0x40000000) != 0),
+				"param_interrogated": ((res & 0x20000000) != 0),
+				"command_issued": ((res & 0x10000000) != 0),
+				"gen_trans_after_acq": ((res & 0x08000000) != 0)
+			}
+			return acq_pr
+	def record19_local_net(self):
+		rec19={}
+		rec19["qacqhpr"] = g4ngps.qacqhpr(self)
+		return rec19
+	def record19_roam_net(self):
+		rec19={}
+		rec19["qacqrpr"] = g4ngps.qacqrpr(self)
+		return rec19
+		#record 0x1A commands
+	def qacqhev(self):
+		c="QACQHEV//"
+		return g4ngps.acq_rec1A_ev(self,c)
+	def qacqrev(self):
+		c="QACQREV//"
+		return g4ngps.acq_rec1A_ev(self,c)
+	def acq_rec1A_ev(self, c):
+		res=g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		acq_ev = {
+			"acq_enable": (res & 0x80000000) == 0,
+			"ignition": (res & 0x40000000) != 0,
+			"event_c1": (res & 0x20000000) != 0,
+			"event_c2": (res & 0x10000000) != 0,
+			"gen_trans_after_acq": (res & 0x08000000) != 0,
+			"int_a_when_contact_on_acq": (res & 0x00800000) != 0,
+			"int_a_when_contact_off_acq": (res & 0x00400000) != 0,
+			"int_b_when_contact_on_acq": (res & 0x00200000) != 0,
+			"int_b_when_contact_off_acq": (res & 0x00100000) != 0
+		}	
+		return acq_ev
+	def qacqheb(self):
+		return g4ngps.acq_rec1A_eb(self,"QACQHEB//")
+	def qacqreb(self):
+		return g4ngps.acq_rec1A_eb(self,"QACQREB//")
+	
+	def acq_rec1A_eb(self,c):
+		res=g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		acq_eb={
+			"interval_B" :res & 0xffff
+		}
+		return acq_eb
+	
+	def qacqhea(self):
+		return g4ngps.acq_rec1A_ea(self,"QACQHEB//")
+	def qacqrea(self):
+		return g4ngps.acq_rec1A_ea(self,"QACQREB//")
+	
+	def acq_rec1A_ea(self,c):
+		res=g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		acq_ea={
+			"interval_A" :res & 0xffff
+		}
+		return acq_ea
+	def record1A_local_net(self):
+		rec1A={}
+		rec1A["qacqhev"] = g4ngps.qacqhev(self)
+		rec1A["qacqheb"] = g4ngps.qacqheb(self)
+		rec1A["qacqhea"] = g4ngps.qacqhea(self)
+		return rec1A
+	
+	def record1A_roam_net(self):
+		rec1A={}
+		rec1A["qacqrev"] = g4ngps.qacqrev(self)
+		rec1A["qacqreb"] = g4ngps.qacqreb(self)
+		rec1A["qacqrea"] = g4ngps.qacqrea(self)
+		return rec1A
+
+	#record 0x1B commands
+	def qacqhs1(self):
+		return g4ngps.acq_rec1B_s1(self,"QACQHS1//")
+	def qacqrs1(self):
+		return g4ngps.acq_rec1B_s1(self,"QACQRS1//")
+	def acq_rec1B_s1(self,c):
+		res=g4ngps.execute_command(self,c)
+		res=int(res[7:-2],16)
+		acq_s1 = {
+			"acq_enable": (res & 0x80000000) == 0,
+			"ignition": (res & 0x40000000) != 0,
+			"state_counter_1": (res & 0x20000000) != 0,
+			"gen_trans_after_acq": (res & 0x10000000) != 0
+		}
+		return acq_s1
+	def record1B_local_net(self):
+		rec1b={}
+		rec1b["qacqhs1"] = g4ngps.qacqhs1(self)
+		return rec1b
+	def record1B_roam_net(self):
+		rec1b={}
+		rec1b["qacqrs1"] = g4ngps.qacqrs1(self)
+		return rec1b
+	#record 0x1C commands
+	def qacqhs2(self):
+		return g4ngps.acq_rec1C_s2(self,"QACQHS2//")
+	def qacqrs2(self):
+		return g4ngps.acq_rec1C_s2(self,"QACQRS2//")
+	def acq_rec1C_s2(self,c):
+		res=g4ngps.execute_command(self,c)
+		if res[7:-2].decode()=="LIC":
+			return "No License"
+		else:
+			res=int(res[7:-2],16)
+			acq_s2 = {
+				"acq_enable": (res & 0x80000000) == 0,
+				"ignition": (res & 0x40000000) != 0,
+				"state_counter_2": (res & 0x20000000) != 0,
+				"gen_trans_after_acq": (res & 0x10000000) != 0
+			}
+			return acq_s2
+	def record1C_local_net(self):
+		rec1c={}
+		rec1c["qacqhs2"] = g4ngps.qacqhs2(self)
+		return rec1c
+	def record1C_roam_net(self):
+		rec1c={}
+		rec1c["qacqrs2"] = g4ngps.qacqrs2(self)
+		return rec1c
+
+#record 0x1D commands
+	def qacqhsf(self):
+		return g4ngps.acq_rec1D_sf(self,"QACQHSF//")
+	def qacqrsf(self):
+		return g4ngps.acq_rec1D_sf(self,"QACQRSF//")
+	def acq_rec1D_sf(self,c):
+		res=g4ngps.execute_command(self,c)
+		if res[7:-2].decode()=="LIC":
+			return "No License"
+		else:
+			res=int(res[7:-2],16)
+			acq_sf = {
+				"acq_enable": (res & 0x80000000) == 0,
+				"ignition": (res & 0x40000000) != 0,
+				"state_work_private_mode": (res & 0x20000000) != 0,
+				"gen_trans_after_acq": (res & 0x10000000) != 0
+			}
+			return acq_sf
+	def record1D_local_net(self):
+		rec1d={}
+		rec1d["qacqhsf"] = g4ngps.qacqhsf(self)
+		return rec1d
+	def record1D_roam_net(self):
+		rec1d={}
+		rec1d["qacqrsf"] = g4ngps.qacqrsf(self)
+		return rec1d
+#record 0X1E commands
+	def qacqhwp(self):
+		return g4ngps.acq_rec1E_wp(self,"QACQHWP//")
+	def qacqrwp(self):
+		return g4ngps.acq_rec1E_wp(self,"QACQRWP//")
+	def acq_rec1E_wp(self,c):
+		res=g4ngps.execute_command(self,c)
+		if res[7:-2].decode()=="LIC":
+			return "No License"
+		else:
+			res=int(res[7:-2],16)
+			acq_wp = {
+			"acq": (res & 0x80000000) == 0,
+			"ignition_state": (res & 0x40000000) != 0,
+			"work_private": (res & 0x20000000) != 0,
+			"interval_acq_ignition_on": (res & 0x10000000) != 0,
+			"interval_acq_ignition_off": (res & 0x08000000) != 0,
+			"interval_acq_work": (res & 0x04000000) != 0,
+			"interval_acq_private": (res & 0x02000000) != 0,
+			"gen_trans_after_acq": (res & 0x01000000) != 0,
+			}
+			return acq_wp
+	def qacqhwi(self):
+		return g4ngps.acq_rec1E_wi(self,"QACQHWI//")
+	def qacqrwi(self):
+		return g4ngps.acq_rec1E_wi(self,"QACQRWI//")
+
+	def acq_rec1E_wi(self,c):
+		res=g4ngps.execute_command(self,c)
+		if res[7:-2].decode()=="LIC":
+			return "No License"
+		else:
+			res=int(res[7:-2],16)
+			acq_wi={
+				"acq_interval": res & 0xffff
+			}
+			return acq_wi
+
+	def record1E_local_net(self):
+		rec1e={}
+		rec1e["qacqhwp"] = g4ngps.qacqhwp(self)
+		rec1e["qacqhwi"] = g4ngps.qacqhwi(self)
+		return rec1e
+	def record1E_roam_net(self):
+		rec1e={}
+		rec1e["qacqrwp"] = g4ngps.qacqrwp(self)
+		rec1e["qacqrwi"] = g4ngps.qacqrwi(self)
+		return rec1e
+#record 0X1F commands
+	def qacqhdw(self):
+		return g4ngps.acq_rec1E_wp(self,"QACQHDW//")
+	def qacqrdw(self):
+		return g4ngps.acq_rec1E_wp(self,"QACQRDW//")
+	def acq_rec1E_dw(self,c):
+		res=g4ngps.execute_command(self,c)
+		if res[7:-2].decode()=="LIC":
+			return "No License"
+		else:
+			res=int(res[7:-2],16)
+			acq_dw = {
+				"acq_enable": (res & 0x80000000) == 0,
+				"acq_rtcgps_synch_reset": (res & 0x40000000) != 0,
+				"acq_rtcgps_synch": (res & 0x20000000) != 0,
+				"acq_reset": (res & 0x10000000) != 0
+			}
+			return acq_dw	
+	def record1F_local_net(self):
+		rec1e={}
+		rec1e["qacqhdw"] = g4ngps.qacqhdw(self)
+		return rec1e
+	def record1EF_roam_net(self):
+		rec1e={}
+		rec1e["qacqrdw"] = g4ngps.qacqrdw(self)
+		return rec1e	
+
+
+
+
+
+
+
+
+	
+	
+	
+
+
 
 
 
