@@ -2298,7 +2298,7 @@ class g4ngps:
 		res=g4ngps.execute_command(self,c)
 		res=int(res[7:-2],16)
 		acq_rp = {
-		'acquisition': (res & 0x80000000) == 0,
+		'acq_enable': (res & 0x80000000) == 0,
 		'daily_acq': (res & 0x40000000) != 0,
 		'monthly_acq': (res & 0x20000000) != 0,
 		'gen_trans_after_acq': (res & 0x10000000) != 0
@@ -2416,11 +2416,11 @@ class g4ngps:
 	#record 0x17 commands
 	def qacqhib(self):
 		c="QACQHIB//"
-		return g4ngps.acq_rec16_ib(self,c)
+		return g4ngps.acq_rec17_ib(self,c)
 	def qacqrib(self):
 		c="QACQRIB//"
-		return g4ngps.acq_rec16_ib(self,c)
-	def acq_rec16_ib(self, c):
+		return g4ngps.acq_rec17_ib(self,c)
+	def acq_rec17_ib(self, c):
 		res=g4ngps.execute_command(self,c)
 		res=int(res[7:-2],16)
 		acq_ib = {
@@ -2435,13 +2435,166 @@ class g4ngps:
 		rec17={}
 		rec17["qacqrib"] = g4ngps.qacqrib(self)
 		return rec17
-		#record 0x19 commands
+	#record 0x18 commands
+	
+	def qacqhio(self):
+		return g4ngps.acq_rec18_io(self,"QACQHIO//")
+	
+	def qacqrio(self):
+		return g4ngps.acq_rec18_io(self,"QACQRIO//")
+	
+	def acq_rec18_io(self,c):
+		res = g4ngps.execute_command(self,c)
+		print(res)
+		if res[7:-2].decode()=="LIC":
+			print("no lic")
+			return "No License"
+		else:
+			res = int(res[7:-2], 16)	
+			acq_io={
+				'acq' : res & 0x80000000 == 0,
+				'tmr_filt' : res & 0x40000000 != 0,
+				'gen_trans_after_acq' : res & 0x20000000 != 0,
+				'int_a_acq' : res & 0x00800000 != 0,
+				'int_a_w_contact_on_acq' : res & 0x00400000 != 0,
+				'int_a_w_contact_off_acq' : res & 0x00200000 != 0,
+				'int_b_acq' : res & 0x00100000 != 0,
+				'int_b_w_contact_on_acq' : res & 0x00080000 != 0,
+				'int_b_w_contact_off_acq' : res & 0x00040000 != 0,
+				'contact_acq_off_on' : res & 0x00020000 != 0,
+				'contact_acq_on_off' : res & 0x00010000 != 0,
+				'over_io1_threshold' : res & 0x00008000 != 0,
+				'under_io1_threshold' : res & 0x00004000 != 0,
+				'over_io2_threshold' : res & 0x00002000 != 0,
+				'under_io2_threshold' : res & 0x00001000 != 0,
+				'over_io3_threshold' : res & 0x00000800 != 0,
+				'under_io3_threshold' : res & 0x00000400 != 0,
+				'over_io4_threshold' : res & 0x00000200 != 0,
+				'under_io4_threshold' : res & 0x00000100 != 0,
+				'over_vin_threshold' : res & 0x00000080 != 0,
+				'under_vin_threshold' : res & 0x00000040 != 0
+			}
+			return acq_io
+	def	qacqhoa(self):
+		return g4ngps.acq_rec18_oa(self,"QACQHOA//")
+
+	def qacqroa(self):
+		return g4ngps.acq_rec18_oa(self,"QACQROA//")
+
+	def acq_rec18_oa(self,c):
+		res = g4ngps.execute_command(self,c)
+		res = int(res[7:-2],16)
+		acq_oa={
+			"acq_interval_A": (res & 0xffff) /10
+		}	
+		return acq_oa
+	
+	def qacqhob(self):
+		return g4ngps.acq_rec18_ob(self,"QACQHOB//")
+
+	def qacqrob(self):
+		return g4ngps.acq_rec18_ob(self,"QACQROB//")
+	
+	def acq_rec18_ob(self,c):
+		res = g4ngps.execute_command(self,c)
+		res = int(res[7:-2],16)
+		acq_ob={
+			"acq_interval_B": (res & 0xffff) /10
+		}	
+		return acq_ob	
+
+	def qacqit1(self):
+		res=g4ngps.execute_command(self,"QACQIT1//")
+		res=int(res[7:-2],16) &0xffff
+		f = res * 7.08722 / 1000
+		f = int(f) + round((f - int(f)) * 10) / 10
+		acq_it1={
+		"acq_io1_threshold": f
+		}
+		return acq_it1
+	
+	def qacqit2(self):
+		res=g4ngps.execute_command(self,"QACQIT2//")
+		res=int(res[7:-2],16) &0xffff
+		f = res * 7.08722 / 1000
+		f = int(f) + round((f - int(f)) * 10) / 10
+		acq_it2={
+		"acq_io2_threshold": f
+		}
+		return acq_it2
+	
+	def qacqit3(self):
+		res=g4ngps.execute_command(self,"QACQIT3//")
+		res=int(res[7:-2],16) &0xffff
+		f = res * 7.08722 / 1000
+		f = int(f) + round((f - int(f)) * 10) / 10
+		acq_it3={
+		"acq_io3_threshold": f
+		}
+		return acq_it3
+	
+	def qacqit4(self):
+		res=g4ngps.execute_command(self,"QACQIT4//")
+		res=int(res[7:-2],16) &0xffff
+		f = res * 7.08722 / 1000
+		f = int(f) + round((f - int(f)) * 10) / 10
+		acq_it4={
+		"acq_io4_threshold": f
+		}
+		return acq_it4
+	def qacqitv(self):
+		res=g4ngps.execute_command(self,"QACQITV//")
+		res=int(res[7:-2],16) &0xffff
+		f = res * 7.08722 / 1000
+		f = int(f) + round((f - int(f)) * 10) / 10
+		acq_itv={
+		"acq_volt_in_threshold": f
+		}
+		return acq_itv
+	
+	def qacqitt(self):
+		res=g4ngps.execute_command(self,"QACQITT//")
+		res=int(res[7:-2],16) &0xffff /10
+		acq_itt={
+		"acq_time_filter_threshold": res
+		}
+		return acq_itt
+
+	def record18_local_net(self):
+		record18={}
+		record18["acq_io"] = g4ngps.qacqhio(self)
+		record18["acq_oa"] = g4ngps.qacqhoa(self)
+		record18["acq_ob"] = g4ngps.qacqhob(self)
+		record18["acqit1"] = g4ngps.qacqit1(self)
+		record18["acqit2"] = g4ngps.qacqit2(self)
+		record18["acqit3"] = g4ngps.qacqit3(self)
+		record18["acqit4"] = g4ngps.qacqit4(self)
+		record18["acqitv"] = g4ngps.qacqitv(self)
+		record18["acqitt"] = g4ngps.qacqitt(self)
+		return record18
+
+	def record18_roam_net(self):
+		record18={}
+		record18["acq_io"] = g4ngps.qacqrio(self)
+		record18["acq_oa"] = g4ngps.qacqroa(self)
+		record18["acq_ob"] = g4ngps.qacqrob(self)
+		record18["acqit1"] = g4ngps.qacqit1(self)
+		record18["acqit2"] = g4ngps.qacqit2(self)
+		record18["acqit3"] = g4ngps.qacqit3(self)
+		record18["acqit4"] = g4ngps.qacqit4(self)
+		record18["acqitv"] = g4ngps.qacqitv(self)
+		record18["acqitt"] = g4ngps.qacqitt(self)
+		return record18
+		#_iorecord 0x19 commands
+	
 	def qacqhpr(self):
 		c="QACQHPR//"
 		return g4ngps.acq_rec19_pr(self,c)
+
 	def qacqrpr(self):
 		c="QACQRPR//"
 		return g4ngps.acq_rec19_pr(self,c)
+
 	def acq_rec19_pr(self, c):
 		res=g4ngps.execute_command(self,c)
 		if res[7:-2].decode()=="LIC":
@@ -2456,6 +2609,7 @@ class g4ngps:
 				"gen_trans_after_acq": ((res & 0x08000000) != 0)
 			}
 			return acq_pr
+
 	def record19_local_net(self):
 		rec19={}
 		rec19["qacqhpr"] = g4ngps.qacqhpr(self)
@@ -2524,7 +2678,7 @@ class g4ngps:
 		rec1A["qacqreb"] = g4ngps.qacqreb(self)
 		rec1A["qacqrea"] = g4ngps.qacqrea(self)
 		return rec1A
-
+	
 	#record 0x1B commands
 	def qacqhs1(self):
 		return g4ngps.acq_rec1B_s1(self,"QACQHS1//")
@@ -2574,8 +2728,8 @@ class g4ngps:
 		rec1c={}
 		rec1c["qacqrs2"] = g4ngps.qacqrs2(self)
 		return rec1c
-
-#record 0x1D commands
+	
+	#record 0x1D commands
 	def qacqhsf(self):
 		return g4ngps.acq_rec1D_sf(self,"QACQHSF//")
 	def qacqrsf(self):
@@ -2601,7 +2755,7 @@ class g4ngps:
 		rec1d={}
 		rec1d["qacqrsf"] = g4ngps.qacqrsf(self)
 		return rec1d
-#record 0X1E commands
+	#record 0X1E commands
 	def qacqhwp(self):
 		return g4ngps.acq_rec1E_wp(self,"QACQHWP//")
 	def qacqrwp(self):
@@ -2678,7 +2832,7 @@ class g4ngps:
 #record 0x20 commands
 	def qacqhdb(self):
 		return g4ngps.acq_rec20_db(self,"QACQHDB//")
-	def qacqhdb(self):
+	def qacqrdb(self):
 		return g4ngps.acq_rec20_db(self,"QACQRDB//")
 
 	def acq_rec20_db(self,c):
@@ -2701,4 +2855,136 @@ class g4ngps:
 		rec20={}
 		rec20["qacqrdb"] = g4ngps.qacqrdb(self)
 		return rec20
-		
+#record 0x21 commands
+	def qacqhfu(self):
+		return g4ngps.acq_rec21_fu(self, "QACQHFU//")
+	def qacqrfu(self):
+		return g4ngps.acq_rec21_fu(self, "QACQRFU//")
+	def acq_rec21_fu(self,c):
+		res=g4ngps.execute_command(self,c)
+		if res[7:-2].decode()=="LIC":
+			return "No License"
+		else:
+			res=int(res[7:-2],16)
+			acq_rec21={
+				"acq": (res & 0x80000000) == 0,
+				"ign_change": (res & 0x40000000) != 0,
+				"epoch_int_on": (res & 0x20000000) != 0,
+				"epoch_int_off": (res & 0x10000000) != 0,
+				"work_priv_acq": (res & 0x0800000) != 0,
+				"acq_after_reset": (res & 0x04000000) != 0,
+				"gen_trans_acq": (res & 0x02000000) != 0,
+				"acq_ibutton_auth": (res & 0x01000000) != 0,
+				"acq_delta_sens_change": (res & 0x00800000) != 0
+			}
+			return acq_rec21
+	def record21_local_net(self):
+		rec21={}
+		rec21["qacqhfu"] = g4ngps.qacqhfu(self)
+		return rec21
+	def record21_roam_net(self):
+		rec21={}
+		rec21["qacqrfu"] = g4ngps.qacqrfu(self)
+		return rec21
+#record 0x23and0x24
+	def qacqhdb(self):
+		return g4ngps.acq_rec23and24_db(self,"QACQHDB//")
+	def qacqhdb(self):
+		return g4ngps.acq_rec23and24_db(self,"QACQRDB//")
+	def acq_rec23and24_db(self,c):
+		res=g4ngps.execute_command(self,c)
+		if res[7:-2].decode()=="LIC":
+			return "No License"
+		else:
+			res=int(res[7:-2],16)
+			acq_rec23and24={
+				"acq": (res & 0x80000000) == 0,
+				"acq_ign_chg": (res & 0x40000000) != 0,
+				"acq_evt_chg": (res & 0x20000000) != 0,
+				"acq_eco_drv_rec_en": (res & 0x00008000) == 0,
+				"acq_overbrk_det_evt": (res & 0x00004000) != 0,
+				"acq_fuel_rate_det_evt": (res & 0x00002000) != 0,
+				"acq_eng_overload_det_evt": (res & 0x00001000) != 0
+			}
+			return acq_rec23and24
+	def record23and24_local_net(self):
+		rec23and24={}
+		rec23and24["qacqhdb"] = g4ngps.qacqhdb(self)
+		return rec23and24
+	def record23and24_roam_net(self):
+		rec23and24={}
+		rec23and24["qacqrdb"] = g4ngps.qacqrdb(self)
+		return rec23and24	
+#record 0x25		
+	def qacqetr(self):
+		res=g4ngps.execute_command(self,"QACQETR//")
+		if res[7:-2].decode()=="LIC":
+			return "No License"
+		else:
+			res=int(res[7:-2],16)
+			acq_rec25={
+				"event_tracer_enabled": (res & 0x80000000) == 0,
+				"acq_enable":res & 0x80000000 == 0,
+				"acquisition_at_driver_behavior_event_change": (res & 0x40000000) != 0,
+			}
+			return acq_rec25
+	def record25(self):
+		rec25={}
+		rec25["record_25"] = g4ngps.qacqetr(self)
+		return rec25
+#record0x40and0x41	
+	def qacqtco(self):
+		res=g4ngps.execute_command(self,"QACQTCO//")
+		if res[7:-2].decode()=="LIC":
+			return "No License"
+		else:
+			res=res[7:-2]
+			res_1st=int(res[0:8],16)
+			acqtco={
+				"acq": ((res_1st & 0x80000000) == 0),
+				"dis_acq_not_perf": ((res_1st & 0x40000000) != 0),
+				"trig_drvreq_drv1_ws": ((res_1st & 0x00800000) != 0),
+				"trig_drvreq_drv2_ws": ((res_1st & 0x00400000) != 0),
+				"trig_drvreq_recog_state": ((res_1st & 0x00200000) != 0),
+				"trig_drvreq_ignition": ((res_1st & 0x00100000) != 0),
+				"trig_vehreq_drv1_ws": ((res_1st & 0x00080000) != 0),
+				"trig_vehreq_drv2_ws": ((res_1st & 0x00040000) != 0),
+				"trig_vehreq_recog_state": ((res_1st & 0x00020000) != 0),
+				"trig_vehreq_ignition": ((res_1st & 0x00010000) != 0),
+				"trig_drvreq_drv1_timestate": ((res_1st & 0x00008000) != 0),
+				"trig_drvreq_drv1_cardstate": ((res_1st & 0x00004000) != 0),
+				"trig_drvreq_drv1_overspeed_state": ((res_1st & 0x00002000) != 0),
+				"trig_drvreq_drv2_timestate": ((res_1st & 0x00001000) != 0),
+				"trig_drvreq_drv2_cardstate": ((res_1st & 0x00000800) != 0),
+				"trig_drvreq_motor_state": ((res_1st & 0x00000400) != 0),
+				"trig_drvreq_tco_perf_state": ((res_1st & 0x00000200) != 0),
+				"trig_drvreq_tco_dir_state": ((res_1st & 0x00000100) != 0),
+				"trig_vehreq_drv1_time_state": ((res_1st & 0x00000080) != 0),
+				"trig_vehreq_drv1_card_state": ((res_1st & 0x00000040) != 0),
+				"trig_vehreq_drv1_overspeed_state": ((res_1st & 0x00000020) != 0),
+				"trig_vehreq_drv2_time_state": ((res_1st & 0x00000010) != 0),
+				"trig_vehreq_drv2_card_state": ((res_1st & 0x00000008) != 0),
+				"trig_vehreq_motorstate": ((res_1st & 0x00000004) != 0),
+				"trig_vehreq_tco_perf_state": ((res_1st & 0x00000002) != 0),
+				"trig_vehreq_tco_dir_state":((res_1st & 0x00000001) != 0)
+			}
+			if res[8:16].decode()!="":
+				res_2nd=int(res[8:16],16)
+				acqtco["drvEpochIgnOnAcq"] = (res_2nd & 0x80000000) != 0
+				acqtco["vehEpochIgnOnAcq"] = (res_2nd & 0x40000000) != 0
+			return acqtco
+	def qacqtci(self):
+		res=g4ngps.execute_command(self,"QACQTCI//")
+		if res[7:-2].decode()=="LIC":
+			return "No License"
+		elif res[7:-2].decode()=="":
+			return None
+		else:
+			res=int(res[7:-2],16)
+			acqtci={}
+			acqtci["acq_interval"] = res & 0xffff
+	def record40and41(self):
+		rec40and41={}
+		rec40and41["qacqtco"] = g4ngps.qacqtco(self)
+		rec40and41["qacqtci"] = g4ngps.qacqtci(self)
+		return rec40and41
