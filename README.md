@@ -7,9 +7,11 @@ Load the library onto your G4N01ARD device preflashed with MicroPython.
 
 For a production setup, compile it with mpy-cross and copy it to :lib:
 
-`$ mpy-cross -o g4ngps.mpy g4ngps.py`
-`$ mpremote <port> mkdir :lib`
-`$ mpremote <port> cp g4ngps.mpy :lib/g4ngps.mpy`
+```
+$ mpy-cross -o g4ngps.mpy g4ngps.py
+$ mpremote <port> mkdir :lib
+$ mpremote <port> cp g4ngps.mpy :lib/g4ngps.mpy
+```
 
 Open the serial REPL with mpremote or screen:
 
