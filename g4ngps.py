@@ -157,22 +157,22 @@ class g4ngps:
 
 	def qsysfus(self):
 		res = g4ngps.execute_command(self, 'QSYSFUS//')
-		sysfus = { 'tot_fuel_sel': int(res[7:9], 16) }
+		sysfus = { 'tot_fuel_sel': int(res[7:-2], 16) }
 		return sysfus
 
 	def qsysosl(self):
 		res = g4ngps.execute_command(self, 'QSYSOSL//')
-		sysosl = { 'odo_sel': int(res[7:9], 16) }
+		sysosl = { 'odo_sel': int(res[7:-2], 16) }
 		return sysosl
 
 	def qsysssl(self):
 		res = g4ngps.execute_command(self, 'QSYSSSL//')
-		sysssl = { 'spd_sel': int(res[7:9], 16) }
+		sysssl = { 'spd_sel': int(res[7:-2], 16) }
 		return sysssl
 
 	def qsystts(self):
 		res = g4ngps.execute_command(self, 'QSYSTTS//')
-		systts = { 'ign_sel': int(res[7:9], 16) }
+		systts = { 'ign_sel': int(res[7:-2], 16) }
 		return systts
 
 	# work private
@@ -248,7 +248,7 @@ class g4ngps:
 		time.sleep_ms(100)
 		if self.uart.any():
 			res = self.uart.read()
-			syswpf = { 'wp_tm_fltr': int(res[7:9], 16) }
+			syswpf = { 'wp_tm_fltr': int(res[7:-2], 16) }
 			return syswpf
 
 	# power management swv >= 30
@@ -391,7 +391,7 @@ class g4ngps:
 			'fp_gnd_din5': (fp_res & 0x00000400 != 0),
 			'fp_gnd_din6': (fp_res & 0x00000200 != 0),
 			'zzz_pwr_uv': (zzz_res & 0x40000000 != 0),
-			'zzz_dly': (zzz_res & 0x10000000 != 0),
+			'zzz_dla': (zzz_res & 0x10000000 != 0),
 			'zzz_ign_off': (zzz_res & 0x08000000 != 0)
 		}
 		return syspmy
@@ -403,7 +403,7 @@ class g4ngps:
 		sby_res = int(res[15:23], 16)
 		syspms = {
 			'fp_bat_low': (fp_res & 0x40000000 != 0),
-			'fp_dly': (fp_res & 0x20000000 != 0),
+			'fp_dla': (fp_res & 0x20000000 != 0),
 			'fp_ign_on': (fp_res & 0x08000000 != 0),
 			'fp_ibu': (fp_res & 0x04000000 != 0),
 			'fp_min': (fp_res & 0x00800000 != 0),
@@ -411,7 +411,7 @@ class g4ngps:
 			'fp_wdy': (fp_res & 0x00200000 != 0),
 			'fp_day': (fp_res & 0x00100000 != 0),
 			'sby_bat_low': (sby_res & 0x40000000 != 0),
-			'sby_dly': (sby_res & 0x20000000 != 0),
+			'sby_dla': (sby_res & 0x20000000 != 0),
 			'sby_ign_on': (sby_res & 0x08000000 != 0),
 			'sby_ibu': (sby_res & 0x04000000 != 0),
 			'sby_min': (sby_res & 0x00800000 != 0),
@@ -433,20 +433,16 @@ class g4ngps:
 		}
 		return sysslm
 
-	# power management delay full power to stanby
+	# power management full power to stanby delay
 	def qsyspdl(self):
 		res = g4ngps.execute_command(self, 'QSYSPDL//')
-		syspdl = {
-			'dly_fp_sby': int(res[7:11], 16)
-		}
+		syspdl = { 'fp_sby_dla': int(res[7:11], 16) }
 		return syspdl
 
-	# power management delay full power to sleep
+	# power management full power to sleep delay
 	def qsyspds(self):
 		res = g4ngps.execute_command(self, 'QSYSPDS//')
-		syspds = {
-			'dly_fp_zzz': int(res[7:11], 16)
-		}
+		syspds = { 'fp_zzz_dla': int(res[7:11], 16) }
 		return syspds
 
 	#power management full power hour parameters
@@ -468,22 +464,22 @@ class g4ngps:
 		}
 		return qsysppm
 
-	# power management pre-wakeup interval
+	# power management pre-wakeup delay
 	def qsyspwk(self):
 		res = g4ngps.execute_command(self, 'QSYSPWK//')
-		syspwk = {'prewakeup_interval': int(res[7:11], 16)}
+		syspwk = { 'pwku_dla': int(res[7:11], 16) }
 		return syspwk
 
-	# power management stand by transition period
+	# power management stand by transition delay
 	def qsyssls(self):
 		res = g4ngps.execute_command(self, 'QSYSSLS//')
-		syssls = {'sby_trsn_dly': int(res[7:11], 16) }
+		syssls = {'sby_trsn_dla': int(res[7:11], 16) }
 		return syssls
 
-	# power mamangement sleep transition period
+	# power mamangement sleep transition delay
 	def qsysslc(self):
 		res = g4ngps.execute_command(self, 'QSYSSLC//')
-		sysslc = { 'zzz_trsn_dly': int(res[7:9], 16) }
+		sysslc = { 'zzz_trsn_dla': int(res[7:-2], 16) }
 		return sysslc
 
 	# power management idle time
@@ -516,167 +512,157 @@ class g4ngps:
 
 	def qacioeo(self):
 		res = g4ngps.execute_command(self, 'QACIOEO//')
-		acieoe = { 'eng_on_tm': int(res[7:15], 16) }
+		acieoe = { 'ign_on_tm': int(res[7:15], 16) }
 		return acieoe
 
 	def qaciote(self):
 		res = g4ngps.execute_command(self, 'QACIOTE//')
-		aciete = { 'eng_on_tm': int(res[7:15], 16) }
+		aciete = { 'ign_on_tm': int(res[7:15], 16) }
 		return aciete
 
 	# ALM subsys: alarm system
 	
 	# alarms enable home network
 	def qalmhst(self):
-		c = 'QALMHST//'
-		res = g4ngps.execute_command(self, c)
-		res = int(res[7:-2], 16)
-		almhst = {
-			'alarm': (res & 0x80000000 == 0),
-			'over_speed': (res & 0x40000000 != 0),
-			'ign': (res & 0x20000000 != 0),
-			'panic_bt': (res & 0x10000000 != 0),
-			'relay': (res & 0x08000000 != 0),
-			'inp_pwr_uv': (res & 0x04000000 != 0),
-			'inp_pwr_ov': (res & 0x02000000 != 0),
-			'acc_volt_ut': (res & 0x01000000 != 0),
-			'acc_err': (res & 0x00800000 != 0),
-			'relay_dc': (res & 0x00400000 != 0),
-			'ibtn_dc': (res & 0x00200000 != 0),
-			'data_lim': (res & 0x00040000 != 0),
-			'dly_traf_ex': (res & 0x00020000 != 0),
-			'mthly_traf_ex': (res & 0x00010000 != 0),
-			'gps_miss': (res & 0x00008000 != 0),
-			'stc_ct_on': (res & 0x00004000 != 0),
-			'stc_ct_off': (res & 0x00002000 != 0),
-			'spd_ex_ct_ot': (res & 0x00001000 != 0),
-			'motion_sen_mv': (res & 0x00000400 != 0),
-			'priv_alarm': (res & 0x00000100 != 0),
-			'gps_jam': (res & 0x00000040 != 0),
-			'gsm_jam': (res & 0x00000020 != 0),
-			'accel_antith_alarm': (res & 0x00000008 != 0),
-			'dwntime_alarm': (res & 0x00000004 != 0)
-		}
+		res = g4ngps.execute_command(self, 'QALMHST//')
+		almhst = g4ngps.qalm_st(self, int(res[7:16], 16))
 		return almhst
 
 	# alarms enable roaming network
 	def qalmrst(self):
-		c = 'QALMRST//'
-		res = g4ngps.execute_command(self, c)
-		res = int(res[7:-2], 16)
-		almrst = {
-			'alarm': (res & 0x80000000 == 0),
-			'over_speed': (res & 0x40000000 != 0),
-			'ign': (res & 0x20000000 != 0),
-			'panic_bt': (res & 0x10000000 != 0),
-			'relay': (res & 0x08000000 != 0),
-			'inp_pwr_uv': (res & 0x04000000 != 0),
-			'inp_pwr_ov': (res & 0x02000000 != 0),
-			'acc_volt_ut': (res & 0x01000000 != 0),
-			'acc_err': (res & 0x00800000 != 0),
-			'relay_dc': (res & 0x00400000 != 0),
-			'ibtn_dc': (res & 0x00200000 != 0),
-			'data_lim': (res & 0x00040000 != 0),
-			'dly_traf_ex': (res & 0x00020000 != 0),
-			'mthly_traf_ex': (res & 0x00010000 != 0),
-			'gps_miss': (res & 0x00008000 != 0),
-			'stc_ct_on': (res & 0x00004000 != 0),
-			'stc_ct_off': (res & 0x00002000 != 0),
-			'spd_ex_ct_ot': (res & 0x00001000 != 0),
-			'motion_sen_mv': (res & 0x00000400 != 0),
-			'priv_alarm': (res & 0x00000100 != 0),
-			'gps_jam': (res & 0x00000040 != 0),
-			'gsm_jam': (res & 0x00000020 != 0),
-			'accel_antith_alarm': (res & 0x00000008 != 0),
-			'dwntime_alarm': (res & 0x00000004 != 0)
-		}
+		res = g4ngps.execute_command(self, 'QALMRST//')
+		almrst = g4ngps.qalm_st(self, int(res[7:16], 16))
 		return almrst
 
-	# Alarm system overspeed speed threashold
+	# decode alarm dict
+	def qalm_st(self, av):
+		return {
+			'alm_ena': (av & 0x80000000 == 0),
+			'ovs': (av & 0x40000000 != 0),
+			'ign': (av & 0x20000000 != 0),
+			'panic_btn': (av & 0x10000000 != 0),
+			'relay': (av & 0x08000000 != 0),
+			'inp_pwr_uv': (av & 0x04000000 != 0),
+			'inp_pwr_ov': (av & 0x02000000 != 0),
+			'accu_uv': (av & 0x01000000 != 0),
+			'accu_err': (av & 0x00800000 != 0),
+			'relay_dc': (av & 0x00400000 != 0),
+			'ibu_dc': (av & 0x00200000 != 0),
+			'ibu_sp': (av & 0x00100000 != 0),
+			'ibu_grp': (av & 0x00080000 != 0),
+			'dlog_lim': (av & 0x00040000 != 0),
+			'dly_tfc_exc': (av & 0x00020000 != 0),
+			'mth_tfc_exc': (av & 0x00010000 != 0),
+			'no_gps_sig': (av & 0x00008000 != 0),
+			'staty_ign_on': (av & 0x00004000 != 0),
+			'staty_ign_off': (av & 0x00002000 != 0),
+			'mvmt_ign_off': (av & 0x00001000 != 0),
+			'can': (av & 0x00000800 != 0),
+			'mvmt_ms': (av & 0x00000400 != 0),
+			'ibu_auth': (av & 0x00000200 != 0),
+			'pvt_mode': (av & 0x00000100 != 0),
+			'gar_pnd_dc': (av & 0x00000080 != 0),
+			'gps_jam': (av & 0x00000040 != 0),
+			'gsm_jam': (av & 0x00000020 != 0),
+			'fuel': (av & 0x00000020 != 0),
+			'acc_at': (av & 0x00000008 != 0),
+			'dwntm': (av & 0x00000004 != 0)
+		}
 
+	# overspeed alarm speed threshold [km/h*10]
 	def qalmovs(self):
-		c = 'QALMOVS//'
-		res = g4ngps.execute_command(self, c)
-		res = int(res[7:-2], 16)
-		almovs = {'overspeed_threshold': (res & 0xffff) / 10}
+		res = g4ngps.execute_command(self, 'QALMOVS//')
+		almovs = { 'ovs_th': (int(res[7:11], 16) & 0xffff) / 10 }
 		return almovs
 
-	#Alarm system movement treshold
+	# movement motion sensor alarm treshold [km/h*10]
 	def qalmovs(self):
-		c = 'QALMMOV//'
-		res = g4ngps.execute_command(self, c)
-		res = int(res[7:-2], 16)
-		almmov = {'movement_threshold': (res & 0xffff) / 10}
+		res = g4ngps.execute_command(self, 'QALMMOV//')
+		almmov = { 'mvmt_ms_th': (int(res[7:11], 16) & 0xffff) / 10}
 		return almmov
 
-	#Alarm system stationary timer contact on
+	# stationary w/ ignition on alarm timer [sec]
 	def qalmstn(self):
-		c = 'QALMSTN//'
-		res = g4ngps.execute_command(self, c)
-		res = int(res[7:-2], 16)
-		almstn = {'stationary_timer_contact_on': (res & 0xffff)}
+		res = g4ngps.execute_command(self, 'QALMSTN//')
+		res = int(res[7:11], 16)
+		almstn = { 'staty_ign_on_tmr': (res & 0xffff) }
 		return almstn
 
-	#Alarm system stationary timer contact on
+	# stationary w/ ignition off alarm timer [sec]
 	def qalmstf(self):
-		c = 'QALMSTF//'
-		res = g4ngps.execute_command(self, c)
-		res = int(res[7:-2], 16)
-		almstf = {'stationary_timer_contact_off': (res & 0xffff)}
+		res = g4ngps.execute_command(self, 'QALMSTF//')
+		almstf = { 'staty_ign_off_tmr': (int(res[7:11], 16) & 0xffff) }
 		return almstf
 
-	#Alarm system speed threshold contact on
+	# stationary alarm speed threshold [km/h*10]
 	def qalmssn(self):
-		c = 'QALMSSN//'
-		res = g4ngps.execute_command(self, c)
-		res = int(res[7:-2], 16)
-		almssn = {'speed_threshold_contact_on': (res & 0xffff) / 10}
+		res = g4ngps.execute_command(self, 'QALMSSN//')
+		almssn = { 'staty_spd_th': (int(res[7:11], 16) & 0xffff) / 10 }
 		return almssn
 
-	#Alarm system speed threshold contact off
+	# stationary w/ ignition off speed threshold [km/h*10]
 	def qalmssf(self):
-		c = 'QALMSSF//'
-		res = g4ngps.execute_command(self,c)
-		res = int(res[7:-2], 16)
-		almssf = {'speed_threshold_contact_off': (res & 0xffff) / 10}
+		res = g4ngps.execute_command(self, 'QALMSSF//')
+		almssf = { 'staty_ign_off_spd_th': (int(res[7:11], 16) & 0xffff) / 10 }
 		return almssf
 
-	#Alarm system  missing gps treshold
+	# no gps signal alarm timer [sec]
 	def qalmgmt(self):
-		c = 'QALMGMT//'
-		res = g4ngps.execute_command(self, c)
-		res = int(res[7:-2], 16)
-		almgmt = {'gps_missing_threshold': (res & 0xffff)}
+		res = g4ngps.execute_command(self, 'QALMGMT//')
+		almgmt = { 'no_gps_sig_tmr': (int(res[7:11], 16) & 0xffff) }
 		return almgmt
 
-	#Alarm system down time timer
+	# downtime alarm timer [min]
 	def qalmdta(self):
-		c = 'QALMDTA//'
-		res = g4ngps.execute_command(self, c)
-		res = int(res[7:-2], 16)
-		almdta = {'down_time_timer': (res & 0xffff)}
+		res = g4ngps.execute_command(self, 'QALMDTA//')
+		almdta = { 'dwtm_tmr': (int(res[7:11], 16) & 0xffff) }
 		return almdta
 
-#Alarm system data flash limit
-
+	# datalog alarm limit [records]
 	def qalmdfl(self):
-		c = 'QALMDFL//'
-		res = g4ngps.execute_command(self, c)
-		res = int(res[7:-2], 16)
-		almdfl = {'data_flash_limit': (res & 0xffff)}
+		res = g4ngps.execute_command(self, 'QALMDFL//')
+		almdfl = { 'dlog_lim': (int(res[7:11], 16) & 0xffff) }
 		return almdfl
 
-	#Alarm system delay accelerometer movement threhold
+	# accelerometer anti-theft delay [sec]
 	def qalmatd(self):
-		c = 'QALMDFL//'
-		res = g4ngps.execute_command(self, c)
-		res = int(res[7:-2], 16)
-		almatd = {'delay_acc_movement': (res & 0xffff)}
+		res = g4ngps.execute_command(self, 'QALMATD//')
+		almatd = { 'acc_at_dla': (int(res[7:11], 16) & 0xffff) }
 		return almatd
 
-#Transmission system
-#transmission on local network
+	# accelerometer anti-theft siren activation time [sec]
+	def qalmatt(self):
+		res = g4ngps.execute_command(self, 'QALMATT//')
+		almatt = { 'acc_at_srn_on_tmr': (int(res[7:-2], 16) & 0xffff) }
+		return almatt
 
+	# event counter 1 total events [events]
+	def qalme1t(self):
+		res = g4ngps.execute_command(self, 'QALME1T//')
+		alme1t = { 'ec1_evt_tot': (int(res[7:11], 16) & 0xffff) }
+		return alme1t
+
+	# event counter 1 trip events [events]
+	def qalme1r(self):
+		res = g4ngps.execute_command(self, 'QALME1R//')
+		alme1r = { 'ec1_evt_trp': (int(res[7:11], 16) & 0xffff) }
+		return alme1r
+
+	# event counter 2 total events [events]
+	def qalme2t(self):
+		res = g4ngps.execute_command(self, 'QALME2T//')
+		alme2t = { 'ec2_evt_tot': (int(res[7:11], 16) & 0xffff) }
+		return alme2t
+
+	# event counter 2 trip events [events]
+	def qalme2r(self):
+		res = g4ngps.execute_command(self, 'QALME2R//')
+		alme2r = { 'ec2_evt_trp': (int(res[7:11], 16) & 0xffff) }
+		return alme2r
+
+	# TRS sybsystem: transmission
+	
+	# transmission on local network
 	def qtrshst(self):
 		c = 'QTRSHST//'
 		res = g4ngps.execute_command(self, c)
