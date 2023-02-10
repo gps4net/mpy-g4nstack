@@ -2730,10 +2730,10 @@ class g4ngps:
 		return rec1e
 #record 0X1F commands
 	def qacqhdw(self):
-		return g4ngps.acq_rec1E_wp(self,"QACQHDW//")
+		return g4ngps.acq_rec1F_dw(self,"QACQHDW//")
 	def qacqrdw(self):
-		return g4ngps.acq_rec1E_wp(self,"QACQRDW//")
-	def acq_rec1E_dw(self,c):
+		return g4ngps.acq_rec1F_dw(self,"QACQRDW//")
+	def acq_rec1F_dw(self,c):
 		res=g4ngps.execute_command(self,c)
 		if res[7:-2].decode()=="LIC":
 			return "No License"
@@ -2754,3 +2754,30 @@ class g4ngps:
 		rec1e={}
 		rec1e["qacqrdw"] = g4ngps.qacqrdw(self)
 		return rec1e
+#record 0x20 commands
+	def qacqhdb(self):
+		return g4ngps.acq_rec20_db(self,"QACQHDB//")
+	def qacqhdb(self):
+		return g4ngps.acq_rec20_db(self,"QACQRDB//")
+
+	def acq_rec20_db(self,c):
+		res=g4ngps.execute_command(self,c)
+		if res[7:-2].decode()=="LIC":
+			return "No License"
+		else:
+			res=int(res[7:-2],16)
+			acq_db={
+			"acq_enable": (res & 0x80000000) == 0,
+			"acq_ign_chg": (res & 0x40000000) != 0,
+			"acq_evt_chg": (res & 0x20000000) != 0
+			}
+			return acq_db
+	def record20_local_net(self):
+		rec20={}
+		rec20["qacqhdb"] = g4ngps.qacqhdb(self)
+		return rec20
+	def record20_roam_net(self):
+		rec20={}
+		rec20["qacqrdb"] = g4ngps.qacqrdb(self)
+		return rec20
+		
