@@ -1568,165 +1568,178 @@ class g4ngps:
 			ig['motion_sensor_derived'] = (result_int & 0x2000) != 0
 			ig['accelerometer_movement'] = (result_int & 0x0800) != 0
 			ig['polarity'] = (result_int & 0x0400) != 0
-
-		c = 'QDIOPCT//'
-		res = g4ngps.execute_command(self, c)
-		res = res[7:-2]
-		if res:
-			result_int = int(res, 16)
-			result_int = result_int & 0xffff
-			f = result_int * 7.08722 / 1000
-			f = int(f) + round((f - int(f)) * 10) / 10
-			ig['threshold'] = f
-
-		c = 'QDIOCSS//'
-		res = g4ngps.execute_command(self, c)
-		res = res[7:-2]
-		ig['speed_threshold'] = int(res)
-
-		c = 'QDIOCST//'
-		res = g4ngps.execute_command(self, c)
-		res = res[7:-2]
-		result_int = int(res, 16)
-		ig['time_threshold'] = result_int & 0xffff
-
-		c = 'QDIOPCF//'
-		res = g4ngps.execute_command(self, c)
-		res = res[7:-2]
-		i = int(res, 16)
-		f = float(i)
-		ig['filter_threshold'] = f
-
 		return ig
+	
+	def qdiopct(self):
+		res = self.execute_command("QDIOPCT//")
+		if res:
+			res = int(res[7:-2], 16)
+			f = res * 7.08722 / 1000
+			f = int(f) + round((f - int(f)) * 10) / 10
+			diopct = {'threshold' : f}
+			return diopct
+		else:
+			return None	
+	def qdiocss(self):
+		res=self.execute_command("QDIOCSS//")[7:-2]
+		diocss={
+			'speed_thresh': int(res)
+		}
+		return diocss
+
+	def qdiocst(self):
+		res=self.execute_command("QDIOCST//")[7:-2]
+		diocst ={
+			'time_threshold': int(res,16)
+		}	
+		return diocst
+
+	def qdiopcf(self):
+		res=int(self.execute_command("QDIOPCF//")[7:-2],16)
+		diopcf={
+			'filter_thresh' : float(res)
+		}
+		return diopcf
+	def read_ignition_entity(self):
+		ig_ent_io ={
+			'diopco': self.qdiopco(),
+			'diopct': self.qdiopct(),
+			'diocss': self.qdiocss(),
+			'diocst': self.qdiocst(),
+			'diopcf': self.qdiopcf()
+		}	
+		return ig_ent_io
 
 	#read panic button io entity
+	def read_panic_button_entity(self):
+		pan_ent_io={
+			'diopal': self.qdiopal(),
+			'diopat': self.qdiopat(),
+			'diopdr': self.qdiopdr(),
+			'diopaf': self.qdiopaf()
+		}
+		return pan_ent_io
+	
+	
 	def qdiopal(self):
-		resInt = 0
-		resLong = 0
-
-		c = 'QDIOPAL//'
-
-		res = g4ngps.execute_command(self, c)
-		res = res[7:-2]
-		resLong = int(res, 16)
-
-		pb = {}
-		pb['io'] = 'todo'
-		pb['polarity'] = (resLong & 0x20000000) != 0
-		pb['monostable'] = (resLong & 0x10000000) != 0
-		pb['disableRelay'] = (resLong & 0x00800000) != 0
-		pb['stateIgnition'] = (resLong & 0x08000000) != 0
-		pb['panicTimeFilter'] = (resLong & 0x02000000) != 0
-
-		c = 'QDIOPAT//'
-		res = g4ngps.execute_command(self, c)
-		res = res[7:-2]
-		resInt = int(res, 16)
-		resInt = resInt & 0xffff
-		f = resInt * 7.08722 / 1000
+		res = int(self.execute_command('QDIOPAL//')[7:-2],16)
+		diopal = {
+		'io': 'todo',
+		'polarity' : (res & 0x20000000) != 0,
+		'monostable' : (res& 0x10000000) != 0,
+		'disableRelay' : (res & 0x00800000) != 0,
+		'stateIgnition' : (res & 0x08000000) != 0,
+		'panicTimeFilter' : (res & 0x02000000) != 0
+		}
+		return diopal
+	
+	def qdiopat(self):
+		res = int(self.execute_command('QDIOPAT//')[7:-2],16)
+		f = res * 7.08722 / 1000
 		f = int(f) + round((f - int(f)) * 10) / 10
-		pb['threshold'] = f
+		diopat={'threshold' : f}
+		return diopat
 
-		c = 'QDIOPDR//'
-		res = g4ngps.execute_command(self, c)
-		res = res[7:-2]
-		resInt = int(res, 16)
-
-		pb['duration'] = resInt & 0xffff
-
-		c = 'QDIOPAF//'
-		res = g4ngps.execute_command(self, c)
-		res = res[7:-2]
-		resInt = int(res, 16)
-
-		pb['thresholdTimeFilter'] = resInt & 0xffff
-
-		return pb
+	def qdiopdr(self):
+		res = int(self.execute_command('QDIOPDR//')[7:-2],16)
+		diopdr={'duration':  res}
+		return diopdr
+	
+	def qdiopaf(self):
+		res = int(self.execute_command('QDIOPAF//')[7:-2],16)
+		diopaf={'thresholdTimeFilter':res}
+		return diopaf
 
 	#read relay io entity
-	def qdioprt(self):
-		c = 'QDIOPRT//'
-		res = g4ngps.execute_command(self, c)
-		res = int(res[7:-2], 16)
-		rl = {}
-		rl['enabled'] = res & 0x80000000 == 0
-		rl['io'] = res  #get IO entity
-		rl['polarity'] = res & 0x20000000 != 0
-		rl['mono'] = res & 0x10000000 != 0
-		rl['act_contact_off'] = res & 0x08000000 != 0
-		rl['inact_contact_off'] = res & 0x02000000 != 0
-		rl['act_contact_on'] = res & 0x04000000 != 0
-		rl['inact_contact_on'] = res & 0x01000000 != 0
-		c = 'QDIOPRP//'
-		res = g4ngps.execute_command(self, c)
-		res = int(res[7:-2], 16)
+	def read_relay_entity(self):
+		relay_ent_io={
 
-		C = 'QDIOPRP//'
-		res = g4ngps.execute_command(self, c)
-		res = int(res[7:-2], 16)
-		res = res & 0xffff
+		}
+		return relay_ent_io
+	def qdioprt(self):
+		res = int(self.execute_command("QDIOPRT")[7:-2],16)
+		dioprt = {
+		'enabled': res & 0x80000000 == 0,
+		'io' :  res,  #get IO entity
+		'polarity' : res & 0x20000000 != 0,
+		'mono' : res & 0x10000000 != 0,
+		'act_contact_off' : res & 0x08000000 != 0,
+		'inact_contact_off' : res & 0x02000000 != 0,
+		'act_contact_on' : res & 0x04000000 != 0,
+		'inact_contact_on' : res & 0x01000000 != 0
+		}
+		return dioprt
+
+	def qdioprp(self):
+		res = int(self.execute_command("QDIOPRP//")[7:-2],16)
+		dioprp={}
 		if res == 65535:
-			rl['relayPulse'] = None
+			dioprp['relayPulse'] = None
 		else:
-			rl['relayPulse'] = res
-		return rl
+			dioprp['relayPulse'] = res
+		return dioprp
 
 	#ibu io entity
 	def qibuast(self):
-		c = 'QIBUAST//'
-
-		res = g4ngps.execute_command(self, c)
-		res = int(res[7:-2], 16)
-		ibutton = {}
-		ibutton['io'] = None  #get_io_of_entity(ENTITY45.IBUTTONA)
-		ibutton['deac_contact_off'] = (res & 0x20000000) != 0
-		ibutton['deac_contact_on'] = (res & 0x10000000) != 0
-		ibutton['deac_panic_alarm'] = (res & 0x08000000) != 0
-		ibutton['light_on_auth_success'] = (res & 0x04000000) != 0
-		ibutton['light_off_auth_failed'] = (res & 0x02000000) != 0
-		ibutton['led_on_relay_enabled'] = (res & 0x01000000) != 0
-		ibutton['led_off_relay_disabled'] = (res & 0x00800000) != 0
-		ibutton['ignition_ok'] = (res & 0x00008000) != 0
-		ibutton['ignition_failed'] = (res & 0x00004000) != 0
-		ibutton['ignition_ok_timer'] = (res & 0x00002000) != 0
-		ibutton['ignition_failed_timer'] = (res & 0x00001000) != 0
-		ibutton['ok_reset_enable_relay'] = (res & 0x00000800) != 0
-		ibutton['ok_reset_disable_relay'] = (res & 0x00000400) != 0
-		ibutton['fail_reset_enable_relay'] = (res & 0x00000200) != 0
-		ibutton['fail_reset_disable_relay'] = (res & 0x00000100) != 0
-		ibutton['ignition_ok'] = (re & 0x00000080) != 0
-		ibutton['ibu_recog'] = (res & 0x00000040) != 0
-		ibutton['ibu_not_recog'] = (res & 0x00000020) != 0
-
-		c = 'QIBULND//'
-		res = g4ngps.execute_command(self, c)
-		res = int(res[7:-2], 16)
-
-		duration = res & 0xffff
-		if duration == 255:
-			ibutton['time_light_on_success_auth'] = None
-		else:
-			ibutton['time_light_on_success_auth'] = duration
-
-		c = 'QIBULFD//'
-		res = g4ngps.execute_command(self, c)
-		res = int(res[7:-2], 16)
-		duration = res & 0xffff
-		if duration == 255:
-			ibutton['time_light_on_failed_auth'] = None
-		else:
-			ibutton['time_light_on_failed_auth'] = duration
-
-		c = 'QIBUAOT//'
-		res = g4ngps.execute_command(self, c)
-		res = int(res[7:-2], 16)
-		ibutton['auth_ok_timer'] = res & 0xffff
-		c = 'QIBUAFT//'
-		res = g4ngps.execute_command(self, c)
-		res = int(res[7:-2], 16)
-		ibutton['auth_fail_timer'] = res & 0xffff
-
+		res = int(self.execute_command("QIBUAST//")[7:-2],16)
+		ibutton = {
+		'io': None, 
+		'deac_contact_off': (res & 0x20000000) != 0,
+		'deac_contact_on': (res & 0x10000000) != 0,
+		'deac_panic_alarm': (res & 0x08000000) != 0,
+		'light_on_auth_success': (res & 0x04000000) != 0,
+		'light_off_auth_failed': (res & 0x02000000) != 0,
+		'led_on_relay_enabled' : (res & 0x01000000) != 0,
+		'led_off_relay_disabled' : (res & 0x00800000) != 0,
+		'ignition_ok' : (res & 0x00008000) != 0,
+		'ignition_failed' : (res & 0x00004000) != 0,
+		'ignition_ok_timer' : (res & 0x00002000) != 0,
+		'ignition_failed_timer' : (res & 0x00001000) != 0,
+		'ok_reset_enable_relay' : (res & 0x00000800) != 0,
+		'ok_reset_disable_relay' : (res & 0x00000400) != 0,
+		'fail_reset_enable_relay' : (res & 0x00000200) != 0,
+		'fail_reset_disable_relay' : (res & 0x00000100) != 0,
+		'ignition_ok' : (res & 0x00000080) != 0,
+		'ibu_recog' : (res & 0x00000040) != 0,
+		'ibu_not_recog' : (res & 0x00000020) != 0
+		}
 		return ibutton
+	def qibulnd(self):
+		res = int(self.execute_command('QIBULND//')[7:-2],16)
+		ibulnd = {}
+		if res== 255:
+			ibulnd['time_light_on_success_auth'] = None
+		else:
+			ibulnd['time_light_on_success_auth'] = res
+		return ibulnd	
+	def qibulfd(self):
+		res = int(self.execute_command("QIBULFD//")[7:-2],16)
+		ibulfd={}
+		if res == 255:
+			ibulfd['time_light_on_failed_auth'] = None
+		else:
+			ibulfd['time_light_on_failed_auth'] = res
+		return ibulfd
+	def qibuaot(self):
+		res = int(self.execute_command("QIBUAOT//")[7:-2],16)
+		ibuaot={
+		'auth_ok_timer': res}
+		return ibuaot
+	def qibuaft(self):
+		res = int(self.execute_command('QIBUAFT//')[7:-2],16)
+		ibuaft = {
+		'auth_fail_timer' : res 
+		}
+		return ibuaft
+	def read_ibutton_entity(self):
+		ibu_ent_io={
+			'ibuast': self.qibuast(),
+			'ibulnd': self.qibulnd(),
+			'ibulfd': self.qibulfd(),
+			'ibuaot': self.qibuaot(),
+			'ibuaft': self.qibuaft()
+		}
+		return ibu_ent_io
 
 	#read input power
 	def qdiovlt(self):
@@ -1822,9 +1835,10 @@ class g4ngps:
 		res = g4ngps.execute_command(self, c)
 		res = res[7:-2]
 		res = int(res[0:4], 16)
-		state_count2 = {}
-		state_count2['set_io'] = None  #todo
-		state_count2['edge_trig'] = res & 0x4000 != 0
+		state_count2 = {
+		'set_io' : None,  #todo
+		'edge_trig': res & 0x4000 != 0
+		}
 		c = 'QDIOS2L//'
 		res = g4ngps.execute_command(self, c)
 		res = int(res[7:-2], 16)
@@ -1841,48 +1855,65 @@ class g4ngps:
 		res = g4ngps.execute_command(self, c)
 		res = res[7:-2]
 		res = int(res[0:4], 16)
-		qev_gen1 = []
-		qev_gen1['set_io'] = None
-		qev_gen1['edge_trig'] = (res & 0x4000) != 0
+		qev_gen1 = {
+		'set_io' : None,
+		'edge_trig' : (res & 0x4000) != 0
+		}
 		return qev_gen1
 
 	def qdioego2(self):
-		c = 'QDIOEGO//'
-		res = g4ngps.execute_command(self, c)
+		res = self.execute_command('QDIOEGO//')
 		res = res[7:-2]
 		res = int(res[4:8], 16)
-		qev_gen2 = []
-		qev_gen2['set_io'] = None
-		qev_gen2['edge_trig'] = (res & 0x4000) != 0
+		qev_gen2 = {
+		'set_io' : None,
+		'edge_trig' : (res & 0x4000) != 0
+		}
 		return qev_gen2
 
 	def qdiomts(self):
-		result_int = 0
-		result_long = 0
-		ms = {}
+		res =self.execute_command('QDIOMTS//')[7:-2]
+		diomts={
+		'io_assigned':None, #todo	
+		'relay' :(res & 0x40000000) !=0
+		}
+		return diomts
 
-		commands = ['QDIOMTS//', 'QDIOMTT//', 'QDIOMIT//', 'QDIOMFT//', 'QDIOMFC//']
-		results = [g4ngps.execute_command(self, cmd) for cmd in commands]
-		results = [res[7:-2] for res in results]
-
-		result_long = int(results[0], 16)
-		ms['io'] = None  #'todo'
-		ms['relay'] = (result_long & 0x40000000) != 0
-
-		result_int = int(results[1], 16) & 0xffff
-		f = result_int * 7.08722 / 1000
-		ms['threshold'] = int(f) + round((f - int(f)) * 10) / 10
-
-		result_int = int(results[2], 16) & 0xffff
-		ms['idle_timer'] = result_int / 100
-
-		result_int = int(results[3], 16) & 0xffff
-		ms['filter_timer'] = result_int / 100
-
-		result_int = int(results[4], 16) & 0xffff
-		ms['threshold_filter_counter'] = result_int & 0xffff
-
-		return ms
+	def qdiomtt(self):
+		res = int(self.execute_command('QDIOMTT//')[7:-2], 16) 
+		f = res * 7.08722 / 1000
+		diomtt={
+			'threshold':int(f) + round((f - int(f)) * 10) / 10
+		}
+		return diomtt
+	def qdiomit(self):
+		res = int(self.execute_command('QDIOMIT//')[7:-2], 16) 
+		diomit={
+			'idle_timer': res
+		}
+		return diomit
+	def qdiomft(self):
+		res= int(self.execute_command('QDIOMFT//')[7:-2], 16)
+		diomft={
+			'filter_timer':res
+		}
+		return diomft
+	def qdiomts(self):
+		res= int(self.execute_command('QDIOMFC//')[7:-2], 16)
+		diomfc={
+			'threshold_fil_counter':res
+		}
+		return diomfc
+	def read_event_gen2(self):
+		eg2={
+			'dioego':self.qdioego2(),
+			'diomts':self.qdiomts(),
+			'diomtt':self.qdiomtt(),
+			'diomit':self.qdiomit(),
+			'diomtf':self.qdiomtf(),
+			'diomts':self.qdiomts()
+		}
+		return eg2
 
 #read buzzer
 
@@ -2996,7 +3027,7 @@ class g4ngps:
 		return rec23and24	
 #record 0x25		
 	def qacqetr(self):
-		res=g4ngps.execute_command(self,"QACQETR//")
+		res=self.execute_command("QACQETR//")
 		if res[7:-2].decode()=="LIC":
 			return "No License"
 		else:
