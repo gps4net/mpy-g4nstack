@@ -951,157 +951,202 @@ class g4ngps:
 
 	## GPR subsystem: mobile data
 
+	# sim selector
 	def qgprsim(self):
 		res = self.execute_command('QGPRSIM//')
-		lic_ch = res[7:-2].decode()
+		sr = res[7:-2]
 		gprsim = {}
-		if 'lic' in lic_ch:
-			gprsim['dual_sim_licensed'] = False
-			# return gprsim
-		else:
-			res_int = int(res[7:-2], 16)
-			if res_int == 0x00:
-				gprsim['sim_selector']: 'ext_sim_only'
-			elif res_int == 0x20:
-				gprsim['sim_selector']: 'intern_sim_only'
-			elif res_int == 0x40:
-				gprsim['sim_selector']: 'intern_sim_ext_not_detected'
-			elif res_int == 0x60:
-				gprsim['sim_selector']: 'intern_sim_ext_fails'
-			elif res_int == 0x80:
-				gprsim['sim_selector']: 'ext_sim_home_intern_roaming'
-				if res_int == 0x60:
-					c = 'QGPRCTH//'
-					result = g4ngps.execute_command(self, c)
-					result = result[7:-2]
-					gprsim['external_sim_timeout']: int(result, 16)
-
-					c = 'QGPRIST//'
-					result = g4ngps.execute_command(self, c)
-					result = result[7:-2]
-					gprsim['intern_sim_timeout']: int(result, 16)
+		if len(sr) == 2:
+			si = int(sr, 16)
+			if si == 0x00:
+				gprsim['sim_sel'] = 'ext_sim'
+			elif si == 0x20:
+				gprsim['sim_sel'] = 'int_sim'
+			elif si == 0x40:
+				gprsim['sim_sel'] = 'ext_sim_fb_int'
+			elif si == 0x60:
+				gprsim['sim_sel'] = 'ext_sim_to_int'
+			elif si == 0x80:
+				gprsim['sim_sel'] = 'ext_sim_h_int_r'
+		elif len(sr) == 3 and sr == b'LIC':
+			gprsim = { 'lic': True }
 		return gprsim
 
-	# read apn info
+	# apn selector
 	def qgprmct(self):
-		c = 'QGPRMCT//'
-		res = g4ngps.execute_command(self, c)
-		res = int(res[7:-2], 6)
-		res_apn = 0x3000 & res
-		qgprmct = {'apn': None}
-		if res_apn == 0x0000:
-			qgprmct['apn']: 'Main'
-		if res_apn == 0x1000:
-			qgprmct['apn']: 'List'
-		if res_apn == 0x2000:
-			res_apn['apn']: 'Secondary'
+		res = self.execute_command('QGPRMCT//')
+		av = 0x3000 & int(res[7:11], 16)
+		qgprmct = {}
+		if av == 0x0000:
+			qgprmct['apn'] = 'pri'
+		if av == 0x1000:
+			qgprmct['apn'] = 'lst'
+		if av == 0x2000:
+			qgprmct['apn'] = 'sec'
 		return qgprmct
 
-	#read main apn
+	# primary apn
 	def qgprgma(self):
-		c = 'QGPRGMA//'
-		res = g4ngps.execute_command(self, c)
-		res = res[7:-2].decode()
-		gprgma = {'apn': res}
+		res = self.execute_command('QGPRGMA//')
+		gprgma = { 'pri_apn': res[7:-2].decode() }
 		return gprgma
 
-	#read  main username
+	# primary apn username
 	def qgprgmu(self):
-		c = 'QGPRGMU//'
-		res = g4ngps.execute_command(self, c)
-		res = res[7:-2].decode()
-		gprgmu = {'apn_user': res}
+		res = self.execute_command('QGPRGMU//')
+		gprgmu = {' pri_apn_usr': res[7:-2].decode() }
 		return gprgmu
 
-	#read main pass
+	# primary apn password
 	def qgprgmp(self):
-		c = 'QGPRGMP//'
-		res = g4ngps.execute_command(self, c)
-		res = res[7:-2].decode()
-		gprgmp = {'apn_pass': res}
+		res = self.execute_command('QGPRGMP//')
+		gprgmp = { 'pri_apn_pwd': res[7:-2].decode() }
 		return gprgmp
 
-	#read secondary user
+	# secondary apn
+	def qgprgsa(self):
+		res = self.execute_command('QGPRGSA//')
+		gprgsa = { 'sec_apn': res[7:-2].decode() }
+		return gprgsa
+
+	# secondary apn user
 	def qgprgsu(self):
-		c = 'QGPRGSU//'
-		res = g4ngps.execute_command(self, c)
-		return res
+		res = self.execute_command('QGPRGSU//')
+		gprgsu = { 'sec_apn_usr': res[7:-2].decode() }
+		return gprgsu
 
-	#def read remote peer type
+	# secondary apn passowrd
+	def qgprgsp(self):
+		res = self.execute_command('QGPRGSP//')
+		gprgsp = { 'sec_apn_pwd': res[7:-2].decode() }
+		return gprgsp
+
+	# apn params
+	def qgprgms(self):
+		res = self.execute_command('QGPRGMS//')
+		gms = res[7:-2].decode().split(',')
+		gprgms = {
+			'pri_apn': gms[0],
+			'pri_apn_usr': gms[1],
+			'pri_apn_pwd': gms[2],
+			'sec_apn': gms[3],
+			'sec_apn_usr': gms[4],
+			'sec_apn_pwd': gms[5]
+		}
+		return gprgms
+
+	# remote server name
 	def qgprgrs(self):
-		c = 'QGPRGRS//'
-		res = g4ngps.execute_command(self, c)
-		res = res[7:-2].decode()
-		remote_peer = {'remote_peer': res}
-		return remote_peer
+		res = self.execute_command('QGPRGRS//')
+		gprgrs = { 'rem_srv': res[7:-2].decode() }
+		return gprgrs
 
-	#def read remote port
+	# remote server port
 	def qgprgrp(self):
-		c = 'QGPRGRP//'
-		res = g4ngps.execute_command(self, c)
-		res = res[7:-2].decode()
-		remote_port = {'remote_port': res}
-		return remote_port
+		res = self.execute_command('QGPRGRP//')
+		gprgrp = { 'rem_srv_prt': res[7:-2].decode() }
+		return gprgrp
 
-	#def read upgrade peer
+	# upgrade server name
 	def qgprgus(self):
-		c = 'QGPRGUS//'
-		res = g4ngps.execute_command(self, c)
-		res = res[7:-2].decode()
-		gprgus = {'update_peer': res}
+		res = self.execute_command('QGPRGUS//')
+		gprgus = { 'upg_srv': res[7:-2].decode() }
 		return gprgus
 
-	#def read upgrade port
+	# upgrade server port
 	def qgprgup(self):
-		c = 'QGPRGUP//'
-		res = g4ngps.execute_command(self, c)
-		res = res[7:-2].decode()
-		gprgup = {'update_port': res}
+		res = self.execute_command('QGPRGUP//')
+		gprgup = { 'upg_srv_prt': res[7:-2].decode() }
 		return gprgup
 
-	#read backup peer
+	# backup server name
 	def qgprgbs(self):
-		c = 'QGPRGBS//'
-		res = g4ngps.execute_command(self, c)
-		res = res[7:-2].decode()
-		gprgbs = {'backup_peer': res}
+		res = self.execute_command('QGPRGBS//')
+		gprgbs = { 'bkp_srv': res[7:-2].decode() }
 		return gprgbs
 
-		#read backup port
+	# backup server port
 	def qgprgbp(self):
-		c = 'QGPRGBS//'
-		res = g4ngps.execute_command(self, c)
-		res = res[7:-2].decode()
-		gprgbp = {'backup_port': res}
+		res = self.execute_command('QGPRGBP//')
+		gprgbp = { 'bkp_srv_prt': res[7:-2].decode() }
 		return gprgbp
 
+	# sim manager internal sim timeout [min]
 	def qgprist(self):
-		c = 'QGPRIST//'
-		result = g4ngps.execute_command(self, c)
-		result = result[7:-2].decode()
-		gprist = {'intern_sim_timeout': int(result, 16)}
+		res = self.execute_command('QGPRIST//')
+		gprist = { 'int_sim_to': int(res[7:-2], 16) }
 		return gprist
 
+	# sim manager external sim timeout [min]
 	def qgprcth(self):
-		c = 'QGPRCTH//'
-		result = g4ngps.execute_command(self, c)
-		result = result[7:-2].decode()
-		gprcth = {'external_sim_timeout': int(result, 16)}
+		res = self.execute_command('QGPRCTH//')
+		gprcth = { 'ext_sim_to': int(res[7:-2], 16) }
 		return gprcth
 
-#GPS
+	# external sim traffic limit
+	def qgprxtt(self):
+		res = self.execute_command('QGPRXTT//')
+		gprxtt = { 'ext_sim_tfc_lim': int(res[7:15], 16) }
+		return gprxtt
+
+	# internal sim traffic limit
+	def qgprctt(self):
+		res = self.execute_command('QGPRCTT//')
+		gprctt = { 'int_sim_tfc_lim': int(res[7:15], 16) }
+		return gprctt
+
+	# query gprs traffic counters
+	def qgprtrc(self):
+		res = self.execute_command('QGPRTRC//')
+		gprtrc = {
+			'ext_sim_tot_tfc': int(res[7:11], 16),
+			'int_sim_tot_tfc': int(res[11:15], 16),
+			'ext_sim_mth_tfc': int(res[15:19], 16),
+			'int_sim_mth_tfc': int(res[19:23], 16),
+			'ext_sim_dly_tfc': int(res[23:27], 16),
+			'int_sim_dly_tfc': int(res[27:31], 16),
+			'ext_sim_tot_att': int(res[31:33], 16),
+			'int_sim_tot_att': int(res[33:35], 16),
+			'ext_sim_tot_conn': int(res[35:38], 16),
+			'int_sim_tot_conn': int(res[38:41], 16),
+		}
+		return gprtrc
+
+	# gprs waiting threshold for sending data
+	def qgprthw(self):
+		res = self.execute_command('QGPRTHW//')
+		gprthw = { 'gprs_dla_th': int(res[7:11], 16) }
+		return gprthw
+
+	# reset traffic counters
+	def cgprtcs(self, id):
+		if (not re.match('^[a-fA-F0-9]+$', id)):
+			return None
+		res = self.execute_command('CGPRTCS{:04d}//'.format(int(id, 16)))
+		return res[7:10]
+
+	# use primary apn
+	def cgprupa(self):
+		res = self.execute_command('CGPRUPA//')
+		return res[7:10]
+
+	# use ceondary apn
+	def cgprusa(self):
+		res = self.execute_command('CGPRUSA//')
+		return res[7:10]
+
+	# GPS subsystem
 
 	def qgpsset(self):
-		c = 'QGPSSET//'
-		res = g4ngps.execute_command(self, c)
-		res = int(res[7:-2], 16)
+		res = self.execute_command('QGPSSET//')
+		ri = int(res[7:-2], 16)
 		gpsset = {
-			'sbas_enabled': (res & 0x4000 != 0),
-			'gps_updates': (res & 0x2000 != 0),
-			'data_filter': (res & 0x1000 == 0),
-			'inv_pos': (res & 0x0800 == 0),
-			'inv_pos_acc': (res & 0x0400 == 0),
-			'inv_pos_priv_mode': (res & 0x0200 != 0)
+			'sbas_enabled': (ri & 0x4000 != 0),
+			'gps_updates': (ri & 0x2000 != 0),
+			'data_filter': (ri & 0x1000 == 0),
+			'inv_pos': (ri & 0x0800 == 0),
+			'inv_pos_acc': (ri & 0x0400 == 0),
+			'inv_pos_priv_mode': (ri & 0x0200 != 0)
 		}
 		return gpsset
 
