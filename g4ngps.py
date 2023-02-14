@@ -12,6 +12,8 @@ class g4ngps:
 			res = self.uart.read()
 			return res
 
+	# SYS subsystem: main system
+
 	def qsysinf(self):
 		self.uart.write('QSYSINF//')
 		time.sleep_ms(100)
@@ -50,6 +52,7 @@ class g4ngps:
 			}
 			return sysrtc
 
+	# set esp32 real time clock from qsysinf
 	def setrtc(self):
 		rtc = machine.RTC()
 		sysrtc = self.qsysrtc()
@@ -65,43 +68,6 @@ class g4ngps:
 			int(sysrtc['hhmmss'][4:6]),
 			int(sysrtc['us'][0:2])
 			]))
-
-	def qgpsinf(self):
-		self.uart.write('QGPSINF//')
-		time.sleep_ms(100)
-		if self.uart.any():
-			res = self.uart.read(91)
-			gpsinf = {
-				'hhmmss': res[7:13],
-				'ddmmyyyy': res[13:21],
-				'hour': int(res[7:9]),
-				'min': int(res[9:11]),
-				'sec': int(res[11:13]),
-				'day': int(res[13:15]),
-				'mon': int(res[15:17]),
-				'year': int(res[17:21]),
-				'lat': int(res[21:29]) / 1000000,
-				'lon': int(res[29:39]) / 1000000,
-				'alt': int(res[39:45]) / 100,
-				'navstat': res[45:47],
-				'sog': int(res[47:53], 16),
-				'cog': int(res[53:59], 16) / 100,
-				'gus': int(res[59:61]),
-				'pdop': int(res[61:65], 16) / 100,
-				'hdop': int(res[65:69], 16) / 100,
-				'vdop': int(res[69:73], 16) / 100,
-				'gps_dist': int(res[73:81], 16),
-				'gps_trp_dist': int(res[81:89], 16)
-			}
-			inavstat = int(gpsinf['navstat'], 16)
-			gpsinf['alt'] *= inavstat & 0x80 >> 7
-			gpsinf['lat'] *= inavstat & 0x40 >> 6
-			gpsinf['lon'] *= inavstat & 0x20 >> 5
-			gpsinf['nst'] = inavstat & 0x10 >> 4
-			gpsinf['navst'] = inavstat & 0x0f
-			return gpsinf
-
-	# SYS subsystem: main system
 
 	def qsyssts(self):
 		res = self.execute_command('QSYSSTS//')
@@ -1137,75 +1103,133 @@ class g4ngps:
 
 	# GPS subsystem
 
+	# gps information
+	def qgpsinf(self):
+		self.uart.write('QGPSINF//')
+		time.sleep_ms(100)
+		if self.uart.any():
+			res = self.uart.read(91)
+			gpsinf = {
+				'hhmmss': res[7:13],
+				'ddmmyyyy': res[13:21],
+				'hour': int(res[7:9]),
+				'min': int(res[9:11]),
+				'sec': int(res[11:13]),
+				'day': int(res[13:15]),
+				'mon': int(res[15:17]),
+				'year': int(res[17:21]),
+				'lat': int(res[21:29]) / 1000000,
+				'lon': int(res[29:39]) / 1000000,
+				'alt': int(res[39:45]) / 100,
+				'navstat': res[45:47],
+				'sog': int(res[47:53], 16),
+				'cog': int(res[53:59], 16) / 100,
+				'gus': int(res[59:61]),
+				'pdop': int(res[61:65], 16) / 100,
+				'hdop': int(res[65:69], 16) / 100,
+				'vdop': int(res[69:73], 16) / 100,
+				'gps_dst': int(res[73:81], 16),
+				'gps_trp_dst': int(res[81:89], 16)
+			}
+			inavstat = int(gpsinf['navstat'], 16)
+			gpsinf['alt'] *= inavstat & 0x80 >> 7
+			gpsinf['lat'] *= inavstat & 0x40 >> 6
+			gpsinf['lon'] *= inavstat & 0x20 >> 5
+			gpsinf['nst'] = inavstat & 0x10 >> 4
+			gpsinf['navst'] = inavstat & 0x0f
+			return gpsinf
+
+	# gps settings
 	def qgpsset(self):
 		res = self.execute_command('QGPSSET//')
-		ri = int(res[7:-2], 16)
+		ri = int(res[7:11], 16)
 		gpsset = {
-			'sbas_enabled': (ri & 0x4000 != 0),
-			'gps_updates': (ri & 0x2000 != 0),
-			'data_filter': (ri & 0x1000 == 0),
-			'inv_pos': (ri & 0x0800 == 0),
-			'inv_pos_acc': (ri & 0x0400 == 0),
-			'inv_pos_priv_mode': (ri & 0x0200 != 0)
+			'pwr_save': (ri & 0x8000 != 0),
+			'sbas_ena': (ri & 0x4000 != 0),
+			'gps_upd': (ri & 0x2000 != 0),
+			'gps_fltr': (ri & 0x1000 == 0),
+			'trans_vld': (ri & 0x0800 == 0),
+			'acc_vld': (ri & 0x0400 == 0),
+			'inv_pos_pvt': (ri & 0x0200 != 0),
+			'vld_pos_prot ': (ri & 0x0100 != 0)
 		}
 		return gpsset
 
-	#gps number of satelites
+	# exhaustive filter space vehicle threshold
 	def qgpsefn(self):
-		c = 'QGPSEFN//'
-		res = g4ngps.execute_command(self, c)
-		res = int(res[7:-2], 16)
-		gpsefn = {'no_sat': res}
+		res = self.execute_command('QGPSEFN//')
+		gpsefn = { 'gus_th': int(res[7:-2], 16) }
 		return gpsefn
 
-	#gps pdop
+	# exhaustive filter pdop threshold
 	def qgpsefp(self):
-		c = 'QGPSEFP//'
-		res = g4ngps.execute_command(self, c)
-		res = res[7:-2]
-		pdop1 = res[0:2]
-		pdop2 = res[2:]
-		gpsefp = {}
-		if pdop2 == 0:
-			gpsefp['pdop']: pdop1
-		else:
-			gpsefp['pdop']: pdop1 + 0.1 * pdop2
+		res = self.execute_command('QGPSEFP//')
+		gpsefp = { 'pdop_th': int(res[7:9], 16) + 0.1*int(res[9:11], 16) }
 		return gpsefp
 
-	#gps speed
-	def gpsefs(self):
-		c = 'QGPSEFS//'
-		res = g4ngps.execute_command(self, c)
-		res = int(res[7:-2], 16)
-		gpsefs = {'gps_speed': res}
+	# exhaustive filter speed threshold [kmh]
+	def qgpsefs(self):
+		res = self.execute_command('QGPSEFS//')
+		gpsefs = { 'spd_th': int(res[7:11], 16) }
 		return gpsefs
 
+	# acceleration threshold [km/h/s]
 	def qgpsact(self):
-		c = 'QGPSACT//'
-		res = g4ngps.execute_command(self, c)
-		res = int(res[7:-2], 16)
-		gpsact = {'gps_accel_thresh': res}
+		res = self.execute_command('QGPSACT//')
+		gpsact = { 'acc_th': int(res[7:11], 16) }
 		return gpsact
 
+	# minimum speed threshold [km/h]
+	def qgpssgt(self):
+		res = self.execute_command('QGPSSGT//')
+		gpssgt = { 'spd_min_th': int(res[7:11], 16) }
+		return gpssgt
+
+	# odometer and trip distance value
 	def qgpsdis(self):
-		c = 'QGPSDIS//'
-		res = g4ngps.execute_command(self, c)
-		res = int(res[7:-2], 16)
-		gpsdis = {'gps_odo': res}
+		res = self.execute_command('QGPSDIS//')
+		gpsdis = {
+			'gps_dst': int(res[7:15], 16),
+			'gps_trp_dst': int(res[15:23])
+		}
 		return gpsdis
 
-#DLF
-#read device memory info
+	def qgpspdc(self):
+		res = self.execute_command('QGPSPDC//')
+		gpspdc = {
+			'pvt_dst': int(res[7:15], 16),
+		}
+		return gpspdc
 
-	def qdiowpt(self):
-		c = 'QDLFINF//'
-		res = g4ngps.execute_command(self, c)
-		dlfinf = {'dlf_records': int(res[7:13], 16), 'dlf_total_records': int(res[13:19], 16)}
+	# gps restart time threshold [sec]
+	def qgpsttr(self):
+		res = self.execute_command('QGPSTTR//')
+		gpsttr = {
+			'gps_rst_th': int(res[7:11], 16),
+		}
+		return gpsttr
+
+	# reset distance counters
+	def cgpsdrs(self, id):
+		if (not re.match('^[a-fA-F0-9]+$', id)):
+			return None
+		res = self.execute_command('CGPSDRS{:04d}//'.format(int(id, 16)))
+		return res[7:10]
+
+	# DFL subsystem: dataflash
+
+	# read device memory info
+	def qdflinf(self):
+		res = self.execute_command('QDFLINF//')
+		dlfinf = {
+			'dlf_rec': int(res[7:13], 16),
+			'dlf_tot_rec': int(res[13:19], 16)
+		}
 		return dlfinf
 
-#IO system
-# Volt threshold work-private
+	# DIO subsystem
 
+	# voltage threshold for work-private
 	def qdiowpt(self):
 		c = 'QDIOWPT//'
 		res = g4ngps.execute_command(self, c)
