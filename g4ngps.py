@@ -2063,10 +2063,14 @@ class g4ngps:
 
 	def qclgset(self):
 		res = self.execute_command("QCLGSET//")[7:-2]
-		res=int(res[:4],16)
 		canset={}
-		canset['can_log.enabled'] = (res & 0x8000 == 0)
-		return canset
+		if res.decode() =="LIC" or res.decode()=="UNK" or res.decode()=="ERR":
+			canset['can_log.enabled'] = "No license"
+			return canset
+		else:
+			res=int(res[:4],16)
+			canset['can_log.enabled'] = (res & 0x8000 == 0)
+			return canset
 
 	
 	def qclgpfn(self):
@@ -2090,10 +2094,8 @@ class g4ngps:
 			#no profile installed
 			pass
 
-
-
 	#read fuel measurement
-	def fuelmeasurement(self):
+	def read_fuel_measurement(self):
 		fuel_m = {}
 		fuel_m['qfueset'] = self.qfueset()
 		fuel_m['qfuetac'] = self.qfuetac()
@@ -2182,7 +2184,7 @@ class g4ngps:
 		return self.qacq_rec10_gi('QACQRGI//')
 
 	#generates the record 0x10 by calling its relevant methods
-	def record10_local_net(self):
+	def read_record10_local_net(self):
 		rec10 = {}
 		rec10['qacqhgp'] = self.qacqhgp()
 		rec10['qacqhti'] = self.qacqhti()
@@ -2191,7 +2193,7 @@ class g4ngps:
 		rec10['qacqhgi'] = self.qacqhgi()
 		return rec10
 
-	def record10_roam_net(self):
+	def read_record10_roam_net(self):
 		rec10={}
 		rec10['qacqrgp'] = self.qacqrgp()
 		rec10['qacqrti'] = self.qacqrti()
@@ -2267,13 +2269,13 @@ class g4ngps:
 		return self.acq_rec11_si("QACQRSI//")
 	
 	#read the settings for record 0x11 by calling the relevant methods
-	def record11_local_net(self):
+	def read_record11_local_net(self):
 		rec11={}
 		rec11['qacqhsp'] = self.qacqhsp()
 		rec11['qacqhsi'] = self.qacqhsi()
 
 		return rec11
-	def record11_roam_net(self):
+	def read_record11_roam_net(self):
 		rec11={}
 		rec11['qacqrsp'] = self.qacqrsp()
 		rec11['qacqrsi'] = self.qacqrsi()
@@ -2311,13 +2313,13 @@ class g4ngps:
 		return self.acq_rec12_ci("QACQRCI//")
 	
 	#read the settings for record 0x12 by calling the relevant methods
-	def record12_local_net(self):
+	def read_record12_local_net(self):
 		rec12={}
 		rec12['qacqhcp'] = self.qacqhcp()
 		rec12['qacqhci'] = self.qacqhci()
 
 		return rec12
-	def record12_roam_net(self):
+	def read_record12_roam_net(self):
 		rec12={}
 		rec12['qacqrcp'] = self.qacqrcp()
 		rec12['qacqrci'] = self.qacqrci()
@@ -2360,11 +2362,11 @@ class g4ngps:
 		'gen_trans_after_acq': (res & 0x10000000) != 0
 		}
 		return acq_rp
-	def record13_local_net(self):
+	def read_record13_local_net(self):
 		rec13={}
 		rec13['qacqhrp'] = self.qacqhrp()
 		return rec13
-	def record13_roam_net(self):
+	def read_record13_roam_net(self):
 		rec13={}
 		rec13['qacqrrp'] = self.qacqrrp()
 		return rec13
@@ -2389,30 +2391,25 @@ class g4ngps:
 			"gen_trans_after_acq": (res & 0x01000000) != 0,
 		}
 		return acq_mp
-	def record14_local_net(self):
+	def read_record14_local_net(self):
 		rec14={}
-		rec14['qacqmrp'] = g4ngps.qacqhmp(self)
+		rec14['qacqmrp'] = self.qacqhmp()
 		return rec14
-	def record14_roam_net(self):
+	def read_record14_roam_net(self):
 		rec14={}
-		rec14['qacqmrp'] = g4ngps.qacqrmp(self)
+		rec14['qacqmrp'] = self.qacqrmp()
 		return rec14
 	#record 0x15 commands
 	def qacqhdp(self):
-		c="QACQHDP//"
-		return g4ngps.acq_rec15_dp(self,c)
+		return self.acq_rec15_dp("QACQHDP//")
 	def qacqrdp(self):
-		c="QACQRDP//"
-		return g4ngps.acq_rec15_dp(self,c)
+		return self.acq_rec15_dp("QACQRDP//")
 	def qacqhip(self):
-		c="QACQHIP//"
-		return g4ngps.acq_rep15_ip(self,c)
+		return self.acq_rep15_ip("QACQHIP//")
 	def qacqrip(self):
-		c="QACQRIP//"
-		return g4ngps.acq_rep15_ip(self,c)
+		return self.acq_rep15_ip("QACQRIP//")
 	def acq_rec15_dp(self,c):
-		res=g4ngps.execute_command(self,c)
-		res=int(res[7:-2],16)
+		res=int(self.execute_command(c)[7:-2],16)
 		acq_dp = {
 		'acq_enabled': (res & 0x80000000) == 0,
 		'contact_state': (res & 0x40000000) != 0,
@@ -2424,31 +2421,28 @@ class g4ngps:
 		}
 		return acq_dp
 	def acq_rep15_ip(self,c):
-		res=g4ngps.execute_command(self,c)
-		res=int(res[7:-2],16)
+		res=int(self.execute_command(c)[7:-2],16)
 		acq_dp={
-			"acq_interval": (res & 0xffff)
+			"acq_interval": res 
 		}
 		return acq_dp
-	def record15_local_net(self):
+	def read_record15_local_net(self):
 		rec15={}
-		rec15['qacqhdp'] = g4ngps.qacqhdp(self)
-		rec15['qacqhip'] = g4ngps.qacqhip(self)
+		rec15['qacqhdp'] = self.qacqhdp()
+		rec15['qacqhip'] = self.qacqhip()
 		return rec15
-	def record15_roam_net(self):
+	def read_record15_roam_net(self):
 		rec15={}
-		rec15['qacqrdp'] = g4ngps.qacqrdp(self)
-		rec15['qacqrip'] = g4ngps.qacqrip(self)
+		rec15['qacqrdp'] = self.qacqrdp()
+		rec15['qacqrip'] = self.qacqrip()
 		return rec15
 	#record 0x16 commands
 	def qacqhia(self):
-		c="QACQHIA//"
-		return g4ngps.acq_rec16_ia(self,c)
+		return self.acq_rec16_ia("QACQHIA//")
 	def qacqria(self):
-		c="QACQRIA//"
-		return g4ngps.acq_rec16_ia(self,c)
+		return self.acq_rec16_ia("QACQRIA//")
 	def acq_rec16_ia(self, c):
-		res=g4ngps.execute_command(self,c)
+		res=self.execute_command(c)
 		if res[7:-2].decode()=="LIC":
 			return "No License"
 		else:
@@ -2459,47 +2453,47 @@ class g4ngps:
 			"gen_trans_after_acq": (res & 0x20000000) != 0
 			}
 			return acq_ia
-	def record16_local_net(self):
+	def read_record16_local_net(self):
 		rec16={}
-		rec16["qacqhia"] = g4ngps.qacqhia(self)
+		rec16["qacqhia"] = self.qacqhia()
 		return rec16
-	def record16_roam_net(self):
+	def read_record16_roam_net(self):
 		rec16={}
-		rec16["qacqria"] = g4ngps.qacqria(self)
+		rec16["qacqria"] = self.qacqria()
 		return rec16
 	#record 0x17 commands
 	def qacqhib(self):
-		c="QACQHIB//"
-		return g4ngps.acq_rec17_ib(self,c)
+		return self.acq_rec17_ib("QACQHIB//")
 	def qacqrib(self):
-		c="QACQRIB//"
-		return g4ngps.acq_rec17_ib(self,c)
+		return self.acq_rec17_ib("QACQRIB//")
 	def acq_rec17_ib(self, c):
-		res=g4ngps.execute_command(self,c)
-		res=int(res[7:-2],16)
-		acq_ib = {
-		"acq_enable": (res & 0x80000000) == 0,
-		}
-		return acq_ib
-	def record17_local_net(self):
+		res=self.execute_command(c)
+		if res[7:-2].decode()=="LIC":
+			return "No License"
+		else:
+			res =int(res[7:-2],16)
+			acq_ib = {
+			"acq_enable": (res & 0x80000000) == 0,
+			}
+			return acq_ib
+	def read_record17_local_net(self):
 		rec17={}
-		rec17["qacqhib"] = g4ngps.qacqhib(self)
+		rec17["qacqhib"] = self.qacqhib()
 		return rec17
-	def record17_roam_net(self):
+	def read_record17_roam_net(self):
 		rec17={}
-		rec17["qacqrib"] = g4ngps.qacqrib(self)
+		rec17["qacqrib"] = self.qacqrib()
 		return rec17
 	#record 0x18 commands
 	
 	def qacqhio(self):
-		return g4ngps.acq_rec18_io(self,"QACQHIO//")
+		return self.acq_rec18_io("QACQHIO//")
 	
 	def qacqrio(self):
-		return g4ngps.acq_rec18_io(self,"QACQRIO//")
+		return self.acq_rec18_io("QACQRIO//")
 	
 	def acq_rec18_io(self,c):
-		res = g4ngps.execute_command(self,c)
-		print(res)
+		res = self.execute_command(c)
 		if res[7:-2].decode()=="LIC":
 			print("no lic")
 			return "No License"
@@ -2530,36 +2524,33 @@ class g4ngps:
 			}
 			return acq_io
 	def	qacqhoa(self):
-		return g4ngps.acq_rec18_oa(self,"QACQHOA//")
+		return self.acq_rec18_oa("QACQHOA//")
 
 	def qacqroa(self):
-		return g4ngps.acq_rec18_oa(self,"QACQROA//")
+		return self.acq_rec18_oa("QACQROA//")
 
 	def acq_rec18_oa(self,c):
-		res = g4ngps.execute_command(self,c)
-		res = int(res[7:-2],16)
+		res = int(self.execute_command(c)[7:-2],16)
 		acq_oa={
-			"acq_interval_A": (res & 0xffff) /10
+			"acq_interval_A": res / 10
 		}	
 		return acq_oa
 	
 	def qacqhob(self):
-		return g4ngps.acq_rec18_ob(self,"QACQHOB//")
+		return self.acq_rec18_ob("QACQHOB//")
 
 	def qacqrob(self):
-		return g4ngps.acq_rec18_ob(self,"QACQROB//")
+		return self.acq_rec18_ob("QACQROB//")
 	
 	def acq_rec18_ob(self,c):
-		res = g4ngps.execute_command(self,c)
-		res = int(res[7:-2],16)
+		res = int(self.execute_command(c)[7:-2],16)
 		acq_ob={
-			"acq_interval_B": (res & 0xffff) /10
+			"acq_interval_B":res  /10
 		}	
 		return acq_ob	
 
 	def qacqit1(self):
-		res=g4ngps.execute_command(self,"QACQIT1//")
-		res=int(res[7:-2],16) &0xffff
+		res=int(self.execute_command("QACQIT1//")[7:-2],16)
 		f = res * 7.08722 / 1000
 		f = int(f) + round((f - int(f)) * 10) / 10
 		acq_it1={
@@ -2568,8 +2559,7 @@ class g4ngps:
 		return acq_it1
 	
 	def qacqit2(self):
-		res=g4ngps.execute_command(self,"QACQIT2//")
-		res=int(res[7:-2],16) &0xffff
+		res=int(self.execute_command("QACQIT2//")[7:-2],16)
 		f = res * 7.08722 / 1000
 		f = int(f) + round((f - int(f)) * 10) / 10
 		acq_it2={
@@ -2578,8 +2568,7 @@ class g4ngps:
 		return acq_it2
 	
 	def qacqit3(self):
-		res=g4ngps.execute_command(self,"QACQIT3//")
-		res=int(res[7:-2],16) &0xffff
+		res=int(self.execute_command("QACQIT3//")[7:-2],16)
 		f = res * 7.08722 / 1000
 		f = int(f) + round((f - int(f)) * 10) / 10
 		acq_it3={
@@ -2588,8 +2577,7 @@ class g4ngps:
 		return acq_it3
 	
 	def qacqit4(self):
-		res=g4ngps.execute_command(self,"QACQIT4//")
-		res=int(res[7:-2],16) &0xffff
+		res=int(self.execute_command("QACQIT4//")[7:-2],16)
 		f = res * 7.08722 / 1000
 		f = int(f) + round((f - int(f)) * 10) / 10
 		acq_it4={
@@ -2597,8 +2585,7 @@ class g4ngps:
 		}
 		return acq_it4
 	def qacqitv(self):
-		res=g4ngps.execute_command(self,"QACQITV//")
-		res=int(res[7:-2],16) &0xffff
+		res=int(self.execute_command("QACQITV//")[7:-2],16)
 		f = res * 7.08722 / 1000
 		f = int(f) + round((f - int(f)) * 10) / 10
 		acq_itv={
@@ -2607,50 +2594,47 @@ class g4ngps:
 		return acq_itv
 	
 	def qacqitt(self):
-		res=g4ngps.execute_command(self,"QACQITT//")
-		res=int(res[7:-2],16) &0xffff /10
+		res=int(self.execute_command("QACQITT//")[7:-2],16)
 		acq_itt={
-		"acq_time_filter_threshold": res
+		"acq_time_filter_threshold": res /10
 		}
 		return acq_itt
 
-	def record18_local_net(self):
+	def read_record18_local_net(self):
 		record18={}
-		record18["acq_io"] = g4ngps.qacqhio(self)
-		record18["acq_oa"] = g4ngps.qacqhoa(self)
-		record18["acq_ob"] = g4ngps.qacqhob(self)
-		record18["acqit1"] = g4ngps.qacqit1(self)
-		record18["acqit2"] = g4ngps.qacqit2(self)
-		record18["acqit3"] = g4ngps.qacqit3(self)
-		record18["acqit4"] = g4ngps.qacqit4(self)
-		record18["acqitv"] = g4ngps.qacqitv(self)
-		record18["acqitt"] = g4ngps.qacqitt(self)
+		record18["acq_io"] = self.qacqhio()
+		record18["acq_oa"] = self.qacqhoa()
+		record18["acq_ob"] = self.qacqhob()
+		record18["acqit1"] = self.qacqit1()
+		record18["acqit2"] = self.qacqit2()
+		record18["acqit3"] = self.qacqit3()
+		record18["acqit4"] = self.qacqit4()
+		record18["acqitv"] = self.qacqitv()
+		record18["acqitt"] = self.qacqitt()
 		return record18
 
-	def record18_roam_net(self):
+	def read_record18_roam_net(self):
 		record18={}
-		record18["acq_io"] = g4ngps.qacqrio(self)
-		record18["acq_oa"] = g4ngps.qacqroa(self)
-		record18["acq_ob"] = g4ngps.qacqrob(self)
-		record18["acqit1"] = g4ngps.qacqit1(self)
-		record18["acqit2"] = g4ngps.qacqit2(self)
-		record18["acqit3"] = g4ngps.qacqit3(self)
-		record18["acqit4"] = g4ngps.qacqit4(self)
-		record18["acqitv"] = g4ngps.qacqitv(self)
-		record18["acqitt"] = g4ngps.qacqitt(self)
+		record18["acq_io"] = self.qacqrio()
+		record18["acq_oa"] = self.qacqroa()
+		record18["acq_ob"] = self.qacqrob()
+		record18["acqit1"] = self.qacqit1()
+		record18["acqit2"] = self.qacqit2()
+		record18["acqit3"] = self.qacqit3()
+		record18["acqit4"] = self.qacqit4()
+		record18["acqitv"] = self.qacqitv()
+		record18["acqitt"] = self.qacqitt()
 		return record18
 		#_iorecord 0x19 commands
 	
 	def qacqhpr(self):
-		c="QACQHPR//"
-		return g4ngps.acq_rec19_pr(self,c)
+		return self.acq_rec19_pr("QACQHPR//")
 
 	def qacqrpr(self):
-		c="QACQRPR//"
-		return g4ngps.acq_rec19_pr(self,c)
+		return self.acq_rec19_pr("QACQRPR//")
 
 	def acq_rec19_pr(self, c):
-		res=g4ngps.execute_command(self,c)
+		res=self.execute_command(c)
 		if res[7:-2].decode()=="LIC":
 			return "No License"
 		else:
@@ -2664,24 +2648,21 @@ class g4ngps:
 			}
 			return acq_pr
 
-	def record19_local_net(self):
+	def read_record19_local_net(self):
 		rec19={}
-		rec19["qacqhpr"] = g4ngps.qacqhpr(self)
+		rec19["qacqhpr"] = self.qacqhpr()
 		return rec19
-	def record19_roam_net(self):
+	def read_record19_roam_net(self):
 		rec19={}
-		rec19["qacqrpr"] = g4ngps.qacqrpr(self)
+		rec19["qacqrpr"] = self.qacqrpr()
 		return rec19
 		#record 0x1A commands
 	def qacqhev(self):
-		c="QACQHEV//"
-		return g4ngps.acq_rec1A_ev(self,c)
+		return self.acq_rec1A_ev("QACQHEV//")
 	def qacqrev(self):
-		c="QACQREV//"
-		return g4ngps.acq_rec1A_ev(self,c)
+		return self.acq_rec1A_ev("QACQREV//")
 	def acq_rec1A_ev(self, c):
-		res=g4ngps.execute_command(self,c)
-		res=int(res[7:-2],16)
+		res=int(self.execute_command(c)[7:-2],16)
 		acq_ev = {
 			"acq_enable": (res & 0x80000000) == 0,
 			"ignition": (res & 0x40000000) != 0,
@@ -2695,52 +2676,49 @@ class g4ngps:
 		}	
 		return acq_ev
 	def qacqheb(self):
-		return g4ngps.acq_rec1A_eb(self,"QACQHEB//")
+		return self.acq_rec1A_eb("QACQHEB//")
 	def qacqreb(self):
-		return g4ngps.acq_rec1A_eb(self,"QACQREB//")
+		return self.acq_rec1A_eb("QACQREB//")
 	
 	def acq_rec1A_eb(self,c):
-		res=g4ngps.execute_command(self,c)
-		res=int(res[7:-2],16)
+		res=int(self.execute_command(c)[7:-2],16)
 		acq_eb={
-			"interval_B" :res & 0xffff
+			"interval_B" :res
 		}
 		return acq_eb
 	
 	def qacqhea(self):
-		return g4ngps.acq_rec1A_ea(self,"QACQHEB//")
+		return self.acq_rec1A_ea("QACQHEB//")
 	def qacqrea(self):
-		return g4ngps.acq_rec1A_ea(self,"QACQREB//")
+		return self.acq_rec1A_ea("QACQREB//")
 	
 	def acq_rec1A_ea(self,c):
-		res=g4ngps.execute_command(self,c)
-		res=int(res[7:-2],16)
+		res=int(self.execute_command(self,c)[7:-2],16)
 		acq_ea={
-			"interval_A" :res & 0xffff
+			"interval_A" :res
 		}
 		return acq_ea
-	def record1A_local_net(self):
+	def read_record1A_local_net(self):
 		rec1A={}
-		rec1A["qacqhev"] = g4ngps.qacqhev(self)
-		rec1A["qacqheb"] = g4ngps.qacqheb(self)
-		rec1A["qacqhea"] = g4ngps.qacqhea(self)
+		rec1A["qacqhev"] = self.qacqhev()
+		rec1A["qacqheb"] = self.qacqheb()
+		rec1A["qacqhea"] = self.qacqhea()
 		return rec1A
 	
-	def record1A_roam_net(self):
+	def read_record1A_roam_net(self):
 		rec1A={}
-		rec1A["qacqrev"] = g4ngps.qacqrev(self)
-		rec1A["qacqreb"] = g4ngps.qacqreb(self)
-		rec1A["qacqrea"] = g4ngps.qacqrea(self)
+		rec1A["qacqrev"] = self.qacqrev()
+		rec1A["qacqreb"] = self.qacqreb()
+		rec1A["qacqrea"] = self.qacqrea()
 		return rec1A
 	
 	#record 0x1B commands
 	def qacqhs1(self):
-		return g4ngps.acq_rec1B_s1(self,"QACQHS1//")
+		return self.acq_rec1B_s1("QACQHS1//")
 	def qacqrs1(self):
-		return g4ngps.acq_rec1B_s1(self,"QACQRS1//")
+		return self.acq_rec1B_s1("QACQRS1//")
 	def acq_rec1B_s1(self,c):
-		res=g4ngps.execute_command(self,c)
-		res=int(res[7:-2],16)
+		res=int(self.execute_command(c)[7:-2],16)
 		acq_s1 = {
 			"acq_enable": (res & 0x80000000) == 0,
 			"ignition": (res & 0x40000000) != 0,
@@ -2748,21 +2726,21 @@ class g4ngps:
 			"gen_trans_after_acq": (res & 0x10000000) != 0
 		}
 		return acq_s1
-	def record1B_local_net(self):
+	def read_record1B_local_net(self):
 		rec1b={}
-		rec1b["qacqhs1"] = g4ngps.qacqhs1(self)
+		rec1b["qacqhs1"] = self.qacqhs1()
 		return rec1b
-	def record1B_roam_net(self):
+	def read_record1B_roam_net(self):
 		rec1b={}
-		rec1b["qacqrs1"] = g4ngps.qacqrs1(self)
+		rec1b["qacqrs1"] = self.qacqrs1()
 		return rec1b
 	#record 0x1C commands
 	def qacqhs2(self):
-		return g4ngps.acq_rec1C_s2(self,"QACQHS2//")
+		return self.acq_rec1C_s2("QACQHS2//")
 	def qacqrs2(self):
-		return g4ngps.acq_rec1C_s2(self,"QACQRS2//")
+		return self.acq_rec1C_s2("QACQRS2//")
 	def acq_rec1C_s2(self,c):
-		res=g4ngps.execute_command(self,c)
+		res=self.execute_command(c)
 		if res[7:-2].decode()=="LIC":
 			return "No License"
 		else:
@@ -2774,22 +2752,22 @@ class g4ngps:
 				"gen_trans_after_acq": (res & 0x10000000) != 0
 			}
 			return acq_s2
-	def record1C_local_net(self):
+	def read_record1C_local_net(self):
 		rec1c={}
-		rec1c["qacqhs2"] = g4ngps.qacqhs2(self)
+		rec1c["qacqhs2"] = self.qacqhs2()
 		return rec1c
-	def record1C_roam_net(self):
+	def read_record1C_roam_net(self):
 		rec1c={}
-		rec1c["qacqrs2"] = g4ngps.qacqrs2(self)
+		rec1c["qacqrs2"] = self.qacqrs2()
 		return rec1c
 	
 	#record 0x1D commands
 	def qacqhsf(self):
-		return g4ngps.acq_rec1D_sf(self,"QACQHSF//")
+		return self.acq_rec1D_sf("QACQHSF//")
 	def qacqrsf(self):
-		return g4ngps.acq_rec1D_sf(self,"QACQRSF//")
+		return self.acq_rec1D_sf("QACQRSF//")
 	def acq_rec1D_sf(self,c):
-		res=g4ngps.execute_command(self,c)
+		res=self.execute_command(c)
 		if res[7:-2].decode()=="LIC":
 			return "No License"
 		else:
@@ -2801,21 +2779,21 @@ class g4ngps:
 				"gen_trans_after_acq": (res & 0x10000000) != 0
 			}
 			return acq_sf
-	def record1D_local_net(self):
+	def read_record1D_local_net(self):
 		rec1d={}
-		rec1d["qacqhsf"] = g4ngps.qacqhsf(self)
+		rec1d["qacqhsf"] = self.qacqhsf()
 		return rec1d
-	def record1D_roam_net(self):
+	def read_record1D_roam_net(self):
 		rec1d={}
-		rec1d["qacqrsf"] = g4ngps.qacqrsf(self)
+		rec1d["qacqrsf"] = self.qacqrsf()
 		return rec1d
 	#record 0X1E commands
 	def qacqhwp(self):
-		return g4ngps.acq_rec1E_wp(self,"QACQHWP//")
+		return self.acq_rec1E_wp("QACQHWP//")
 	def qacqrwp(self):
-		return g4ngps.acq_rec1E_wp(self,"QACQRWP//")
+		return self.acq_rec1E_wp("QACQRWP//")
 	def acq_rec1E_wp(self,c):
-		res=g4ngps.execute_command(self,c)
+		res=self.execute_command(c)
 		if res[7:-2].decode()=="LIC":
 			return "No License"
 		else:
@@ -2832,38 +2810,38 @@ class g4ngps:
 			}
 			return acq_wp
 	def qacqhwi(self):
-		return g4ngps.acq_rec1E_wi(self,"QACQHWI//")
+		return self.acq_rec1E_wi("QACQHWI//")
 	def qacqrwi(self):
-		return g4ngps.acq_rec1E_wi(self,"QACQRWI//")
+		return self.acq_rec1E_wi("QACQRWI//")
 
 	def acq_rec1E_wi(self,c):
-		res=g4ngps.execute_command(self,c)
+		res=self.execute_command(c)
 		if res[7:-2].decode()=="LIC":
 			return "No License"
 		else:
 			res=int(res[7:-2],16)
 			acq_wi={
-				"acq_interval": res & 0xffff
+				"acq_interval": res
 			}
 			return acq_wi
 
-	def record1E_local_net(self):
+	def read_record1E_local_net(self):
 		rec1e={}
-		rec1e["qacqhwp"] = g4ngps.qacqhwp(self)
-		rec1e["qacqhwi"] = g4ngps.qacqhwi(self)
+		rec1e["qacqhwp"] = self.qacqhwp()
+		rec1e["qacqhwi"] = self.qacqhwi()
 		return rec1e
-	def record1E_roam_net(self):
+	def read_record1E_roam_net(self):
 		rec1e={}
-		rec1e["qacqrwp"] = g4ngps.qacqrwp(self)
-		rec1e["qacqrwi"] = g4ngps.qacqrwi(self)
+		rec1e["qacqrwp"] = self.qacqrwp()
+		rec1e["qacqrwi"] = self.qacqrwi()
 		return rec1e
 #record 0X1F commands
 	def qacqhdw(self):
-		return g4ngps.acq_rec1F_dw(self,"QACQHDW//")
+		return self.acq_rec1F_dw("QACQHDW//")
 	def qacqrdw(self):
-		return g4ngps.acq_rec1F_dw(self,"QACQRDW//")
+		return self.acq_rec1F_dw("QACQRDW//")
 	def acq_rec1F_dw(self,c):
-		res=g4ngps.execute_command(self,c)
+		res=self.execute_command(c)
 		if res[7:-2].decode()=="LIC":
 			return "No License"
 		else:
@@ -2875,22 +2853,22 @@ class g4ngps:
 				"acq_reset": (res & 0x10000000) != 0
 			}
 			return acq_dw	
-	def record1F_local_net(self):
+	def read_record1F_local_net(self):
 		rec1e={}
-		rec1e["qacqhdw"] = g4ngps.qacqhdw(self)
+		rec1e["qacqhdw"] = self.qacqhdw()
 		return rec1e
-	def record1F_roam_net(self):
+	def read_record1F_roam_net(self):
 		rec1e={}
-		rec1e["qacqrdw"] = g4ngps.qacqrdw(self)
+		rec1e["qacqrdw"] = self.qacqrdw()
 		return rec1e
 #record 0x20 commands
 	def qacqhdb(self):
-		return g4ngps.acq_rec20_db(self,"QACQHDB//")
+		return self.acq_rec20_db("QACQHDB//")
 	def qacqrdb(self):
-		return g4ngps.acq_rec20_db(self,"QACQRDB//")
+		return self.acq_rec20_db("QACQRDB//")
 
 	def acq_rec20_db(self,c):
-		res=g4ngps.execute_command(self,c)
+		res=self.execute_command(c)
 		if res[7:-2].decode()=="LIC":
 			return "No License"
 		else:
@@ -2901,21 +2879,21 @@ class g4ngps:
 			"acq_evt_chg": (res & 0x20000000) != 0
 			}
 			return acq_db
-	def record20_local_net(self):
+	def read_record20_local_net(self):
 		rec20={}
-		rec20["qacqhdb"] = g4ngps.qacqhdb(self)
+		rec20["qacqhdb"] = self.qacqhdb()
 		return rec20
-	def record20_roam_net(self):
+	def read_record20_roam_net(self):
 		rec20={}
-		rec20["qacqrdb"] = g4ngps.qacqrdb(self)
+		rec20["qacqrdb"] = self.qacqrdb()
 		return rec20
 #record 0x21 commands
 	def qacqhfu(self):
-		return g4ngps.acq_rec21_fu(self, "QACQHFU//")
+		return self.acq_rec21_fu("QACQHFU//")
 	def qacqrfu(self):
-		return g4ngps.acq_rec21_fu(self, "QACQRFU//")
+		return self.acq_rec21_fu("QACQRFU//")
 	def acq_rec21_fu(self,c):
-		res=g4ngps.execute_command(self,c)
+		res=self.execute_command(c)
 		if res[7:-2].decode()=="LIC":
 			return "No License"
 		else:
@@ -2932,21 +2910,21 @@ class g4ngps:
 				"acq_delta_sens_change": (res & 0x00800000) != 0
 			}
 			return acq_rec21
-	def record21_local_net(self):
+	def read_record21_local_net(self):
 		rec21={}
-		rec21["qacqhfu"] = g4ngps.qacqhfu(self)
+		rec21["qacqhfu"] = self.qacqhfu()
 		return rec21
-	def record21_roam_net(self):
+	def read_record21_roam_net(self):
 		rec21={}
-		rec21["qacqrfu"] = g4ngps.qacqrfu(self)
+		rec21["qacqrfu"] = self.qacqrfu()
 		return rec21
 #record 0x23and0x24
 	def qacqhdb(self):
-		return g4ngps.acq_rec23and24_db(self,"QACQHDB//")
+		return self.acq_rec23and24_db("QACQHDB//")
 	def qacqhdb(self):
-		return g4ngps.acq_rec23and24_db(self,"QACQRDB//")
+		return self.acq_rec23and24_db("QACQRDB//")
 	def acq_rec23and24_db(self,c):
-		res=g4ngps.execute_command(self,c)
+		res=self.execute_command(c)
 		if res[7:-2].decode()=="LIC":
 			return "No License"
 		else:
@@ -2961,13 +2939,13 @@ class g4ngps:
 				"acq_eng_overload_det_evt": (res & 0x00001000) != 0
 			}
 			return acq_rec23and24
-	def record23and24_local_net(self):
+	def read_record23and24_local_net(self):
 		rec23and24={}
-		rec23and24["qacqhdb"] = g4ngps.qacqhdb(self)
+		rec23and24["qacqhdb"] = self.qacqhdb()
 		return rec23and24
-	def record23and24_roam_net(self):
+	def read_record23and24_roam_net(self):
 		rec23and24={}
-		rec23and24["qacqrdb"] = g4ngps.qacqrdb(self)
+		rec23and24["qacqrdb"] = self.qacqrdb()
 		return rec23and24	
 #record 0x25		
 	def qacqetr(self):
@@ -2982,13 +2960,13 @@ class g4ngps:
 				"acquisition_at_driver_behavior_event_change": (res & 0x40000000) != 0,
 			}
 			return acq_rec25
-	def record25(self):
+	def read_record25(self):
 		rec25={}
-		rec25["record_25"] = g4ngps.qacqetr(self)
+		rec25["record_25"] = self.qacqetr()
 		return rec25
 #record0x40and0x41	
 	def qacqtco(self):
-		res=g4ngps.execute_command(self,"QACQTCO//")
+		res=self.execute_command("QACQTCO//")
 		if res[7:-2].decode()=="LIC":
 			return "No License"
 		else:
@@ -3028,7 +3006,7 @@ class g4ngps:
 				acqtco["vehEpochIgnOnAcq"] = (res_2nd & 0x40000000) != 0
 			return acqtco
 	def qacqtci(self):
-		res=g4ngps.execute_command(self,"QACQTCI//")
+		res=self.execute_command("QACQTCI//")
 		if res[7:-2].decode()=="LIC":
 			return "No License"
 		elif res[7:-2].decode()=="":
@@ -3036,9 +3014,9 @@ class g4ngps:
 		else:
 			res=int(res[7:-2],16)
 			acqtci={}
-			acqtci["acq_interval"] = res & 0xffff
-	def record40and41(self):
+			acqtci["acq_interval"] = res
+	def read_record40and41(self):
 		rec40and41={}
-		rec40and41["qacqtco"] = g4ngps.qacqtco(self)
-		rec40and41["qacqtci"] = g4ngps.qacqtci(self)
+		rec40and41["qacqtco"] = self.qacqtco()
+		rec40and41["qacqtci"] = self.qacqtci()
 		return rec40and41
