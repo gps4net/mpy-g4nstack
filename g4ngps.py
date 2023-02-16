@@ -1167,22 +1167,22 @@ class g4ngps:
 		gpsefp = { 'pdop_th': int(res[7:9], 16) + 0.1*int(res[9:11], 16) }
 		return gpsefp
 
-	# exhaustive filter speed threshold [kmh]
+	# exhaustive filter speed threshold [km/h]
 	def qgpsefs(self):
 		res = self.execute_command('QGPSEFS//')
-		gpsefs = { 'spd_th': int(res[7:11], 16) }
+		gpsefs = { 'spd_th': int(res[7:11]) }
 		return gpsefs
 
 	# acceleration threshold [km/h/s]
 	def qgpsact(self):
 		res = self.execute_command('QGPSACT//')
-		gpsact = { 'acc_th': int(res[7:11], 16) }
+		gpsact = { 'acc_th': int(res[7:11]) }
 		return gpsact
 
 	# minimum speed threshold [km/h]
 	def qgpssgt(self):
 		res = self.execute_command('QGPSSGT//')
-		gpssgt = { 'spd_min_th': int(res[7:11], 16) }
+		gpssgt = { 'spd_min_th': int(res[7:11]) }
 		return gpssgt
 
 	# odometer and trip distance value
@@ -1218,7 +1218,7 @@ class g4ngps:
 
 	# DFL subsystem: dataflash
 
-	# read device memory info
+	# dataflash info
 	def qdflinf(self):
 		res = self.execute_command('QDFLINF//')
 		dlfinf = {
@@ -1227,381 +1227,495 @@ class g4ngps:
 		}
 		return dlfinf
 
-	# DIO subsystem
+	# clear dirty bit
+	def cdfledb(self):
+		res = self.execute_command('CDFLEDB//')
+		return res[7:10]
 
-	# voltage threshold for work-private
-	def qdiowpt(self):
-		c = 'QDIOWPT//'
-		res = g4ngps.execute_command(self, c)
-		result_int = int(res[7:-2], 16)
-		result_int = result_int & 0xffff
-		f = result_int * 7.08722 / 1000
-		diowpt = {'voltage_threshold': (int(f) + round((f - int(f)) * 10) / 10)}
-		return diowpt
+	# clear erase bit
+	def cdfleeb(self):
+		res = self.execute_command('CDFLEEB//')
+		return res[7:10]
 
-	# read accelerometer
-	def qdioacp(self):
-		c = 'QDIOACP//'
-		res = g4ngps.execute_command(self, c)
-		res = res[7:-2]
-		res1 = int(res[0:8], 16)
-		res2 = int(res[8:16], 16)
-		qdioacp = {
-			'enabled': (res1 & 0x80000000 == 0),
-			'antitheft_enabled': (res1 & 0x40000000 != 0),
-			'motionde_tection': (res1 & 0x20000000 != 0),
-			'activate_relay_alarm': (res1 & 0x00800000 != 0),
-			'deactivate_relay_alarm': (res1 & 0x00400000 != 0),
-			'activate_relay_movement': (res1 & 0x00200000 != 0),
-			'deactivate_relay_movement': (res1 & 0x00100000 != 0),
-			'arm_ignition_off': (res1 & 0x00008000 != 0),
-			'disarm_ignition_on': (res2 & 0x80000000 != 0),
-			'disarm_ibutton': (res2 & 0x40000000 != 0),
-		}
-		return qdioacp
+	# insert record in dataflash
+	def cdflwrc(self, data):
+		if (len(data) != 64 and not re.match('^[a-fA-F0-9]+$', data)):
+			return None
+		res = self.execute_command('CDFLWRC{:s}//'.format(data))
+		return res[7:10]
 
-	#arming delay conditions
-	def qdioard(self):
-		c = 'QDIOARD//'
-		res = g4ngps.execute_command(self, c)
-		res = int(res[7:-2], 16)
-		qdioard = {'arming_delay': res * 0.1}
-		return qdioard
+	# DIO subsystem: data I/O
 
-	#movement lower treshold
-	def qdioarh(self):
-		c = 'QDIOARH//'
-		res = g4ngps.execute_command(self, c)
-		res = int(res[7:-2], 16)
-		qdioarh = {'mov_low_thresh': res}
-		return qdioarh
-
-	#delay movement lower threshold
-	def qdioart(self):
-		c = 'QDIOART//'
-		res = g4ngps.execute_command(self, c)
-		res = int(res[7:-2], 16)
-		qdioart = {'arming_delay_mov_low': res * 0.1}
-		return qdioart
-
-	#movement greater treshold
-	def qdioadt(self):
-		c = 'QDIOADT//'
-		res = g4ngps.execute_command(self, c)
-		res = int(res[7:-2], 16)
-		qdioadt = {'mov_great_thresh': res}
-		return qdioadt
-
-	#number of acceleration events threshold
-	def qdiomdh(self):
-		c = 'QDIOMDH//'
-		res = g4ngps.execute_command(self, c)
-		res = int(res[7:-2], 16)
-		qdiomdh = {'accel_events_thresh': res}
-		return qdiomdh
-
-	#event threshold
-	def qdiomdh(self):
-		c = 'QDIOMDT//'
-		res = g4ngps.execute_command(self, c)
-		res = int(res[7:-2], 16)
-		qdiomdt = {'event_thresh': res}
-		return qdiomdt
-
-	#acceleration decrese rate
-	def qdiomdh(self):
-		c = 'QDIOMDR//'
-		res = g4ngps.execute_command(self, c)
-		res = int(res[7:-2], 16)
-		qdiomdr = {'event_decrese_rate': res}
-		return qdiomdr
-
-	#time motion detection threshold
-	def qdiomdo(self):
-		c = 'QDIOMDO//'
-		res = g4ngps.execute_command(self, c)
-		res = int(res[7:-2], 16)
-		qdiomdo = {'time_motion_det_thresh': res * 0.1}
-		return qdiomdo
-
-	#dio inf
+	# data io information
 	def qdioinf(self):
-		c = 'QDIOINF//'
-		res = g4ngps.execute_command(self, c)
-		res = res[7:-2]
+		res = self.execute_command('QDIOINF//')
 		qdioinf = {
-			'io_contact': res[71:79],
-			'io_panic': res[79:87],
-			'io_relay': res[87:95],
-			'io_status': res[163:165],
-			'io_status2': res[165:167],
+			'io_alloc': res[7:71],
+			'ign_opt': res[71:79],
+			'panic_opt': res[79:87],
+			'rly_opt': res[87:95],
+			'ext_opt': res[95:99],
+			'ec_opt': res[99:107],
+			'sc_opt': res[107:115],
+			'eg_opt': res[115:123],
+			'ms_opt': res[123:131],
+			'wrk_prv_opt': res[131:139],
+			'acc_opt': res[139:155],
+			'ibu_set': res[155:163],
+			'io_sts1': res[163:165],
+			'io_sts2': res[165:167],
 			'ain1': res[167:171],
 			'ain2': res[171:175],
 			'ain3': res[175:179],
-			'power_in_voltage': res[191:195],
-			'temperature': res[199:203]
+			'asp1': res[179:183],
+			'asp2': res[183:187],
+			'asp3': res[187:191],
+			'avin': res[191:195],
+			'asp4': res[195:199],
+			'atmp': res[199:203],
+			'acc_x': res[203:205],
+			'acc_y': res[205:207],
+			'acc_z': res[207:209]
 		}
 		return qdioinf
 
-	#DIOAI read device config
+
+	# data io counters
+	def qdiocnt(self):
+		res = self.execute_command('QDIOCNT//')
+		diocnt = {
+			'lst_ign_on': res[7:15],
+			'last_ign_off': res[15:23],
+			'tot_ign_on': res[23:31],
+			'tot_ign_off': res[31:39],
+			'ec1_trp_evt': res[39:47],
+			'ec1_tot_evt': res[47:55],
+			'ec2_trp_evt': res[55:63],
+			'ec2_tot_evt': res[63:71],
+			'sc1_trp_on': res[71:79],
+			'sc1_trp_off': res[79:87],
+			'sc1_tot_on': res[87:95],
+			'sc1_tot_off': res[95:103],
+			'sc2_trp_on': res[103:111],
+			'sc2_trp_off': res[111:119],
+			'sc2_trp_on': res[119:127],
+			'sc2_tot_off': res[127:135],
+		}
+		return diocnt
+
+	# work private options
+	def qdiowpo(self):
+		res = self.execute_command('QDIOWPO//')
+		wi = int(res[7:15], 16)
+		diowpo = { 'wp_ena': ((wi & 0x80000000) >> 31 == 0) }
+		return diowpo
+
+	# voltage threshold for work private
+	def qdiowpt(self):
+		res = self.execute_command('QDIOWPT//')
+		fn = int(res[7:11], 16) * 7.08722 / 1000
+		diowpt = { 'vin_th': (int(f) + round((fn - int(fn)) * 10) / 10) }
+		return diowpt
+
+	# accelerometer settings
+	def qdioacp(self):
+		res = self.execute_command('QDIOACP//')
+		ai = int(res[7:15], 16)
+		aj = int(res[15:23], 16)
+		dioacp = {
+			'acc_ena': (ai & 0x80000000 == 0),
+			'at_ena': (ai & 0x40000000 != 0),
+			'md_ena': (ai & 0x20000000 != 0),
+			'rly_act_alm': (ai & 0x00800000 != 0),
+			'rly_deact_alm': (ai & 0x00400000 != 0),
+			'rly_act_mvmt': (ai & 0x00200000 != 0),
+			'rly_deact_mvmt': (ai & 0x00100000 != 0),
+			'arm_ign_off': (ai & 0x00008000 != 0),
+			'disarm_ign_on': (aj & 0x80000000 != 0),
+			'disarm_ibu': (aj & 0x40000000 != 0),
+		}
+		return dioacp
+
+	# accelerometer anti-theft arming lower time threshold [sec/10]
+	def qdioard(self):
+		res = self.execute_command('QDIOARD//')
+		dioard = { 'acc_tm_lo_th': int(res[7:11], 16) * 0.1 }
+		return dioard
+
+	# accelerometer anti-theft arming lower movement treshold [sec/10]
+	def qdioarh(self):
+		res = self.execute_command('QDIOARH//')
+		dioarh = { 'acc_mvmt_lo_th': int(res[7:-2], 16) }
+		return dioarh
+
+	# accelerometer anti-theft arming higher time threshold [sec/10]
+	def qdioart(self):
+		res = self.execute_command('QDIOART//')
+		dioart = { 'acc_tm_hi_th': int(res[7:-2], 16) * 0.1}
+		return dioart
+
+	# accelerometer anti-theft arming higher movement treshold [sec/10]
+	def qdioadt(self):
+		res = self.execute_command('QDIOADT//')
+		dioadt = { 'acc_mvmt_hi_th': int(res[7:-2], 16) }
+		return dioadt
+
+	# accelerometer anti-theft period during which events must occur to trigger alarm [sec/10]
+	def dioaep(self):
+		res = self.execute_command('QDIOAEP//')
+		dioaep = { 'acc_at_evt_per': int(res[7:-2], 16) * 0.1 }
+		return dioaep
+
+	# accelerometer anti-theft number of events to trigger alarm [sec/10]
+	def dioaet(self):
+		res = self.execute_command('QDIOAET//')
+		dioaet = { 'acc_at_evt_num': int(res[7:-2], 16) * 0.1 }
+		return dioaet
+
+	# accelerometer motion detector acceleration threshold
+	def qdiomdh(self):
+		res = self.execute_command('QDIOMDH//')
+		diomdh = { 'acc_md_acc_th': int(res[7:-2], 16) }
+		return diomdh
+
+	# accelerometer motion detector event threshold
+	def qdiomdh(self):
+		res = self.execute_command('QDIOMDT//')
+		diomdt = { 'acc_md_evt_th': int(res[7:-2], 16) }
+		return diomdt
+
+	# accelerometer motion detector decrease rate [events/sec]
+	def qdiomdr(self):
+		res = self.execute_command('QDIOMDR//')
+		diomdr = { 'acc_md_evt_dr': int(res[7:-2], 16) }
+		return diomdr
+
+	# accelerometer motion detector on/off transition duration [sec/10]
+	def qdiomdo(self):
+		res = self.execute_command('QDIOMDO//')
+		diomdo = { 'acc_md_trans': int(res[7:11], 16) * 0.1 }
+		return diomdo
+
+	# refresh period for acceleration locked values [sec/10]
+	def dioalu(self):
+		res = self.execute_command('QDIOALU//')
+		dioalu = { 'acc_lv_ref': int(res[7:11], 16) * 0.1 }
+		return dioalu
+
+	# arm accelerometer anti-theft
+	def cdioate(self):
+		res = self.execute_command('CDIOATE//')
+		return res[7:10]
+
+	# disarm accelerometer anti-theft
+	def cdiodte(self):
+		res = self.execute_command('CDIODTE//')
+		return res[7:10]
+
+	# pin allocation for io1
 	def qdioai1(self):
-		c = 'QDIOAI1//'
-		res = g4ngps.execute_command(self, c)
-		res = res[7:-2]
-		qdioai1 = {'IO1': g4ngps.setEntity(self, res)}
+		res = self.execute_command('QDIOAI1//')
+		qdioai1 = { 'io1_alloc': self.__dioai_(res[7:11]) }
 		return qdioai1
 
+	# pin allocation for io2
 	def qdioai2(self):
-		c = 'QDIOAI2//'
-		res = g4ngps.execute_command(self, c)
-		res = res[7:-2]
-		qdioai2 = {'IO2': g4ngps.setEntity(self, res)}
+		res = self.execute_command('QDIOAI2//')
+		qdioai2 = { 'io2_alloc': self.__dioai_(res[7:11]) }
 		return qdioai2
 
+	# pin allocation for io3
 	def qdioai3(self):
-		c = 'QDIOAI13//'
-		res = g4ngps.execute_command(self, c)
-		res = res[7:-2]
-		qdioai3 = {'IO3': g4ngps.setEntity(self, res)}
+		res = self.execute_command('QDIOAI3//')
+		qdioai3 = { 'io3_alloc': self.__dioai_(res[7:11]) }
 		return qdioai3
 
+	# pin allocation for io4
 	def qdioai4(self):
-		c = 'QDIOAI4//'
-		res = g4ngps.execute_command(self, c)
-		res = res[7:-2]
-		qdioai4 = {'IO4': g4ngps.setEntity(self, res)}
+		res = self.execute_command('QDIOAI4//')
+		qdioai4 = { 'io4_alloc': self.__dioai_(res[7:11]) }
 		return qdioai4
 
+	# pin allocation for io5
 	def qdioai5(self):
-		c = 'QDIOAI5//'
-		res = g4ngps.execute_command(self, c)
-		res = res[7:-2]
-		qdioai5 = {'IO5': g4ngps.setEntity(self, res)}
+		res = self.execute_command('QDIOAI5//')
+		qdioai5 = { 'io5_alloc': self.__dioai_(res[7:11]) }
 		return qdioai5
 
+	# pin allocation for io6
 	def qdioai6(self):
-		c = 'QDIOAI6//'
-		res = g4ngps.execute_command(self, c)
-		res = res[7:-2]
-		qdioai6 = {'IO6': g4ngps.setEntity(self, res)}
+		res = self.execute_command('QDIOAI6//')
+		qdioai6 = { 'io6_alloc': self.__dioai_(res[7:11]) }
 		return qdioai6
 
+	# pin allocation for io7
 	def qdioai7(self):
-		c = 'QDIOAI7//'
-		res = g4ngps.execute_command(self, c)
-		res = res[7:-2]
-		qdioai7 = {'IO7': g4ngps.setEntity(self, res)}
+		res = self.execute_command('QDIOAI7//')
+		qdioai7 = { 'io7_alloc': self.__dioai_(res[7:11]) }
 		return qdioai7
 
+	# pin allocation for io8
 	def qdioai8(self):
-		c = 'QDIOAI8//'
-		res = g4ngps.execute_command(self, c)
-		res = res[7:-2]
-		qdioai8 = {'IO8': g4ngps.setEntity(self, res)}
+		res = self.execute_command('QDIOAI8//')
+		qdioai8 = { 'io8_alloc': self.__dioai_(res[7:11]) }
 		return qdioai8
 
+	# pin allocation for io9
 	def qdioai9(self):
-		c = 'QDIOAI9//'
-		res = g4ngps.execute_command(self, c)
-		res = res[7:-2]
-		qdioai9 = {'IO9': g4ngps.setEntity(self, res)}
+		res = self.execute_command('QDIOAI9//')
+		qdioai9 = { 'io9_alloc': self.__dioai_(res[7:11]) }
 		return qdioai9
 
+	# pin allocation for ioa
 	def qdioaia(self):
-		c = 'QDIOAIA//'
-		res = g4ngps.execute_command(self, c)
-		res = res[7:-2]
-		qdioaia = {'IOA': g4ngps.setEntity(self, res)}
+		res = self.execute_command('QDIOAIA//')
+		qdioaia = { 'ioa_alloc': self.__dioai_(res[7:11]) }
 		return qdioaia
 
-	def setEntity(self, data):
-		data = data[0:2].decode()
-		if data == '01':
-			return 'CONTACT'
-		elif data == '02':
-			return 'PANIC BUTTON'
-		elif data == '03':
-			return 'WORK PRIVATE DETECTOR'
-		elif data == '04':
-			return 'RELAY'
-		elif data == '05':
-			return 'EVENT COUNTER1'
-		elif data == '06':
-			return 'EVENT COUNTER2'
-		elif data == '07':
-			return 'STATE COUNTER1'
-		elif data == '08':
-			return 'state couter2'
-		elif data == '09':
-			return 'event generator1'
-		elif data == '0A':
-			return 'event generator2'
-		elif data == '0B':
-			return 'event ibuttonA'
-		elif data == '0D':
-			return 'MotionSensor'
-		elif data == '10':
-			return 'ACCELEROMETERSIREN'
-		elif data == '11':
-			return 'KLINEINTERFACE'
-		elif data == '12':
-			return 'KLINEFUELSENSOR'
-		elif data == '13':
-			return 'ARMINGPOSITIVEACCELEROMETER'
-		elif data == '14':
-			return 'ARMINGNEGATIVEACCELEROMETER'
-		elif data == '15':
-			return 'DISARMINGPOSITIVEACCELEROMETER'
-		elif data == '16':
-			return 'DISARMINGNEGATIVEACCELEROMETER'
-		elif data == '17':
-			return 'IBUTTONB'
-		elif data == '18':
-			return 'BUZZERSIREN'
-		elif data == '19':
-			return 'LATCHINGRELAYCOILA'
-		elif data == '1A':
-			return 'LATCHINGRELAYCOILB'
-		elif data == '1B':
-			return 'TACHO_SIEMENS_DTO1381'
-		elif data == '1C':
-			return 'TACHO_SIEMENS_MTCO1324'
-		elif data == '1D':
-			return 'TACHO_STONERIDGE_SE5000'
-		elif data == '1E':
-			return 'TACHO_STONERIDGE_2400_4800'
-		elif data == '1F':
-			return 'TACHO_ACTIA_L2000'
-		elif data == '20':
-			return 'WORKPRIVATELED'
+	# pin allocation for vin
+	def qdioaiv(self):
+		res = self.execute_command('QDIOAIV//')
+		qdioaia = { 'vin_alloc': self.__dioai_(res[7:11]) }
+		return qdioaia
 
-	#dioEntities
-	#read ignition io entity
+	# pin allocation for uart
+	def qdioaiu(self):
+		res = self.execute_command('QDIOAIU//')
+		qdioaiu = { 'uart_alloc': self.__dioai_(res[7:11]) }
+		return qdioaiu
+
+	# decode io allocation
+	def __dioai_(self, apr):
+		ai = int(apr[0:2], 16)
+		if ai == 0x01:
+			return 'ign'
+		elif ai == 0x02:
+			return 'panic'
+		elif ai == 0x03:
+			return 'wrk_pvt_det'
+		elif ai == 0x04:
+			return 'rly'
+		elif ai == 0x05:
+			return 'ec1'
+		elif ai == 0x06:
+			return 'ec2'
+		elif ai == 0x07:
+			return 'sc1'
+		elif ai == 0x08:
+			return 'sc2'
+		elif ai == 0x09:
+			return 'eg1'
+		elif ai == 0x0a:
+			return 'eg2'
+		elif ai == 0x0b:
+			return 'ibu_a'
+		elif ai == 0x0c:
+			return 'exp'
+		elif ai == 0x0d:
+			return 'ms'
+		elif ai == 0x10:
+			return 'acc_siren'
+		elif ai == 0x11:
+			return 'kline'
+		elif ai == 0x12:
+			return 'kline_fuel'
+		elif ai == 0x13:
+			return 'acc_arm_pos'
+		elif ai == 0x14:
+			return 'acc_arm_neg'
+		elif ai == 0x15:
+			return 'acc_disarm_pos'
+		elif ai == 0x16:
+			return 'acc_disarm_neg'
+		elif ai == 0x17:
+			return 'ibu_b'
+		elif ai == 0x18:
+			return 'buzzer_siren'
+		elif ai == 0x19:
+			return 'lrly_coil_a'
+		elif ai == 0x1a:
+			return 'lrly_coil_b'
+		elif ai == 0x1b:
+			return 'dtco_vdo_1381'
+		elif ai == 0x1c:
+			return 'mtco_vdo_1324'
+		elif ai == 0x1d:
+			return 'dtco_sr_se5000'
+		elif ai == 0x1e:
+			return 'dtco_sr_2400_4800'
+		elif ai == 0x1f:
+			return 'dtco_actia_l2000'
+		elif ai == 0x20:
+			return 'wrk_pvt_led'
+		elif ai == 0x21:
+			return 'ibu_a_auth'
+		elif ai == 0x22:
+			return 'ibu_b_deauth'
+		elif ai == 0x23:
+			return 'mode_sw'
+		elif ai == 0x24:
+			return 'rgb_led'
+		elif ai == 0x25:
+			return 'rs232_par'
+		elif ai == 0x26:
+			return 'rs232_clg'
+		elif ai == 0x27:
+			return 'tco_sog_fo'
+
+	# ignition options
 	def qdiopco(self):
 		res = self.execute_command('QDIOPCO//')
-		res = res[7:-2]
-		res = res[0:4]
-		diopco = {}
-		if res:
-			result_int = int(res, 16)
-			diopco['enabled'] = (result_int & 0x8000) == 0
-			diopco['io'] = 'todo'
-			diopco['sog_derived'] = (result_int & 0x4000) != 0
-			diopco['motion_sensor_derived'] = (result_int & 0x2000) != 0
-			diopco['accelerometer_movement'] = (result_int & 0x0800) != 0
-			diopco['polarity'] = (result_int & 0x0400) != 0
-		return diopco
+		if len(res) == 8:
+			ci = int(res[7:11], 16)
+			qdiopco = {
+				'ign_ena': (ci & 0x8000) == 0,
+				'sog': (ci & 0x4000) != 0,
+				'ms': (ci & 0x2000) != 0,
+				'exp': (ci & 0x1000) != 0,
+				'acc_md': (ci & 0x800) != 0,
+				'pol': (ci & 0x400) != 0,
+				'no_ipt': (ci & 0x200) != 0,
+				'can': (ci & 0x100) != 0,
+				'tco': (ci & 0x80) != 0,
+			}
+			return qdiopco
 	
+	# ignition voltage threshold [v*141]
 	def qdiopct(self):
-		res = self.execute_command("QDIOPCT//")
-		if res:
-			res = int(res[7:-2], 16)
-			f = res * 7.08722 / 1000
-			f = int(f) + round((f - int(f)) * 10) / 10
-			diopct = {'threshold' : f}
-			return diopct
-		else:
-			return None	
+		res = self.execute_command('QDIOPCT//')
+		if len(res) == 4:
+			fn = int(res[7:11], 16) * 7.08722 / 1000
+			qdiopct = { 'ign_th' : int(f) + round((fn - int(fn)) * 10) / 10 }
+			return qdiopct
+
+	# ignition filter threshold [sec]
+	def qdiopcf(self):
+		res = self.execute_command('QDIOPCF//')
+		if len(res) == 2:
+			qdiopcf = { 'ign_fltr_th' : int(res[7:-2], 16) }
+			return qdiopcf
+
+	# speed threshold for sog ignition [km/h]
 	def qdiocss(self):
-		res=self.execute_command("QDIOCSS//")[7:-2]
-		diocss={
-			'speed_thresh': int(res)
-		}
+		res = self.execute_command('QDIOCSS//')
+		qdiocss = { 'ign_sog_th': int(res[7:11]) }
 		return diocss
 
+	# time threshold for sog ignition [sec]
 	def qdiocst(self):
-		res=self.execute_command("QDIOCST//")[7:-2]
-		diocst ={
-			'time_threshold': int(res,16)
-		}	
+		res = self.execute_command('QDIOCST//')
+		diocst = { 'ign_sog_tm_th': int(res[7:11], 16) }	
 		return diocst
 
-	def qdiopcf(self):
-		res=int(self.execute_command("QDIOPCF//")[7:-2],16)
-		diopcf={
-			'filter_thresh' : float(res)
-		}
-		return diopcf
-	def read_ignition_entity(self):
-		ig_ent_io ={
-			'diopco': self.qdiopco(),
-			'diopct': self.qdiopct(),
-			'diocss': self.qdiocss(),
-			'diocst': self.qdiocst(),
-			'diopcf': self.qdiopcf()
-		}	
-		return ig_ent_io
+	# ignition on timer
+	def qdiotoo(self):
+		res = self.execute_command('QDIOTOO//')
+		diotoo = { 'ign_on_tmr': int(res[7:15], 16) }	
+		return diotoo
 
-	#read panic button io entity
-	def read_panic_button_entity(self):
-		pan_ent_io={
-			'diopal': self.qdiopal(),
-			'diopat': self.qdiopat(),
-			'diopdr': self.qdiopdr(),
-			'diopaf': self.qdiopaf()
-		}
-		return pan_ent_io
-	
-	
+	# ignition off timer
+	def qdiotof(self):
+		res = self.execute_command('QDIOTOF//')
+		diotof = { 'ign_off_tmr': int(res[7:15], 16) }	
+		return diotof
+
+	# enable ignition
+	def cdioect(self):
+		res = self.execute_command('CDIOECT//')
+		return res[7:10]
+
+	# disable ignition
+	def cdiodct(self):
+		res = self.execute_command('CDIODCT//')
+		return res[7:10]
+
+	# panic button options
 	def qdiopal(self):
-		res = int(self.execute_command('QDIOPAL//')[7:-2],16)
-		diopal = {
-		'io': 'todo',
-		'polarity' : (res & 0x20000000) != 0,
-		'monostable' : (res& 0x10000000) != 0,
-		'disableRelay' : (res & 0x00800000) != 0,
-		'stateIgnition' : (res & 0x08000000) != 0,
-		'panicTimeFilter' : (res & 0x02000000) != 0
-		}
-		return diopal
+		res = self.execute_command('QDIOPAL//')
+		if len(res[7:15]) == 8:
+			oi = int(res[7:11], 16)
+			qdiopal = {
+				'panic_ena': (oi & 0x8000) == 0,
+				'exp': (oi & 0x4000) != 0,
+				'pol': (oi & 0x2000) != 0,
+				'monost': (oi& 0x1000) != 0,
+				'rly_disa': (oi & 0x800) != 0,
+				'ign_on_disa': (oi & 0x400) != 0,
+				'ipt_fltr': (oi & 0x0200) != 0,
+				'rly_ena_on': (oi & 0x80) != 0,
+				'rly_ena_off': (oi & 0x40) != 0,
+				'rly_disa_on': (oi & 0x20) != 0,
+				'rly_disa_off': (oi & 0x10) != 0,
+			}
+			return qdiopal
 	
+	# panic button voltage threshold [v*141]
 	def qdiopat(self):
-		res = int(self.execute_command('QDIOPAT//')[7:-2],16)
-		f = res * 7.08722 / 1000
-		f = int(f) + round((f - int(f)) * 10) / 10
-		diopat={'threshold' : f}
-		return diopat
+		res = self.execute_command('QDIOPAT//')
+		if len(res[7:11]) == 4:
+			fn = int(res[7:11], 16) * 7.08722 / 1000
+			qdiopat = { 'panic_th' : int(fn) + round((fn - int(fn)) * 10) / 10 }
+			return qdiopat
 
+	# duration for keeping panic signal active [sec]
 	def qdiopdr(self):
-		res = int(self.execute_command('QDIOPDR//')[7:-2],16)
-		diopdr={'duration':  res}
-		return diopdr
+		res = self.execute_command('QDIOPDR//')
+		if len(res[7:11]) == 4:
+			qdiopdr = { 'panic_dur': int(res[7:11], 16) }
+			return qdiopdr
 	
+	# panic button time filter [sec/10]
 	def qdiopaf(self):
-		res = int(self.execute_command('QDIOPAF//')[7:-2],16)
-		diopaf={'thresholdTimeFilter':res}
-		return diopaf
+		res = self.execute_command('QDIOPAF//')
+		if len(res[7:-2]) == 2:
+			qdiopaf = { 'panic_tm_fltr': int(res[7:-2], 16) }
+			return qdiopaf
 
-	#read relay io entity
-	def read_relay_entity(self):
-		relay_ent_io={
+	# enable panic state
+	def cdioect(self):
+		res = self.execute_command('CDIOEPA//')
+		return res[7:10]
 
-		}
-		return relay_ent_io
+	# disable panic state
+	def cdiodct(self):
+		res = self.execute_command('CDIODPA//')
+		return res[7:10]
+
+	# relay options
 	def qdioprt(self):
-		res = int(self.execute_command("QDIOPRT")[7:-2],16)
-		dioprt = {
-		'enabled': res & 0x80000000 == 0,
-		'io' :  res,  #get IO entity
-		'polarity' : res & 0x20000000 != 0,
-		'mono' : res & 0x10000000 != 0,
-		'act_contact_off' : res & 0x08000000 != 0,
-		'inact_contact_off' : res & 0x02000000 != 0,
-		'act_contact_on' : res & 0x04000000 != 0,
-		'inact_contact_on' : res & 0x01000000 != 0
-		}
-		return dioprt
+		res = self.execute_command('QDIOPRT//')
+		if len(res[7:15]) == 8:
+			ri = int(res[7:11], 16)
+			qdioprt = {
+				'rly_ena': ri & 0x8000 == 0,
+				'int_rly_ena': ri & 0x4000 == 0,
+				'pol': ri & 0x2000 != 0,
+				'monost': ri & 0x1000 != 0,
+				'rly_ena_ign_on': ri & 0x800 != 0,
+				'rly_ena_ign_off': ri & 0x200 != 0,
+				'rly_disa_ign_on': ri & 0x400 != 0,
+				'rly_disa_ign_on': ri & 0x100 != 0
+			}
+			return qdioprt
 
+	# relay pulse duration [sec]
 	def qdioprp(self):
-		res = int(self.execute_command("QDIOPRP//")[7:-2],16)
-		dioprp={}
-		if res == 65535:
-			dioprp['relayPulse'] = None
-		else:
-			dioprp['relayPulse'] = res
-		return dioprp
+		res = self.execute_command('QDIOPRP//')
+		if len(res[7:11]) == 4:
+			qdioprp = { 'rly_pls_dur': int(res[7:11], 16) }
+			return qdioprp
 
-	#ibu io entity
+	# enable relay
+	def cdioerl(self):
+		res = self.execute_command('CDIOERL//')
+		return res[7:10]
+
+	# disable relay
+	def cdiodrl(self):
+		res = self.execute_command('CDIODRL//')
+		return res[7:10]
+
+	# ibuutton io entity
 	def qibuast(self):
 		res = int(self.execute_command("QIBUAST//")[7:-2],16)
 		ibutton = {
@@ -1626,6 +1740,7 @@ class g4ngps:
 		'ibu_not_recog' : (res & 0x00000020) != 0
 		}
 		return ibutton
+	
 	def qibulnd(self):
 		res = int(self.execute_command('QIBULND//')[7:-2],16)
 		ibulnd = {}
@@ -1633,7 +1748,8 @@ class g4ngps:
 			ibulnd['time_light_on_success_auth'] = None
 		else:
 			ibulnd['time_light_on_success_auth'] = res
-		return ibulnd	
+		return ibulnd
+	
 	def qibulfd(self):
 		res = int(self.execute_command("QIBULFD//")[7:-2],16)
 		ibulfd={}
@@ -1642,17 +1758,20 @@ class g4ngps:
 		else:
 			ibulfd['time_light_on_failed_auth'] = res
 		return ibulfd
+
 	def qibuaot(self):
 		res = int(self.execute_command("QIBUAOT//")[7:-2],16)
 		ibuaot={
-		'auth_ok_timer': res}
+			'auth_ok_timer': res}
 		return ibuaot
+
 	def qibuaft(self):
 		res = int(self.execute_command('QIBUAFT//')[7:-2],16)
 		ibuaft = {
 		'auth_fail_timer' : res 
 		}
 		return ibuaft
+
 	def read_ibutton_entity(self):
 		ibu_ent_io={
 			'ibuast': self.qibuast(),
@@ -1671,6 +1790,7 @@ class g4ngps:
 		diovolt = {}
 		diovolt['un_volt_thresh'] = f
 		return diovolt
+
 	def qdiovht(self):
 		res = int(self.execute_command('QDIOVHT//')[7:-2],16)
 		f = res * 7.08722 / 1000
@@ -1858,6 +1978,26 @@ class g4ngps:
 			'diomts':self.qdiomts()
 		}
 		return eg2
+
+	def read_ignition_entity(self):
+		ig_ent_io ={
+			'diopco': self.qdiopco(),
+			'diopct': self.qdiopct(),
+			'diocss': self.qdiocss(),
+			'diocst': self.qdiocst(),
+			'diopcf': self.qdiopcf()
+		}	
+		return ig_ent_io
+
+	#read panic button io entity
+	def read_panic_button_entity(self):
+		pan_ent_io={
+			'diopal': self.qdiopal(),
+			'diopat': self.qdiopat(),
+			'diopdr': self.qdiopdr(),
+			'diopaf': self.qdiopaf()
+		}
+		return pan_ent_io
 
 #read buzzer
 
