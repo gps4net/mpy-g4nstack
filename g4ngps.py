@@ -5,9 +5,9 @@ class g4ngps:
 	def __init__(self, port=2, speed=115200, bits=8, parity=None, stop=1, tx=17, rx=16):
 		self.uart = machine.UART(port, speed, bits=bits, parity=parity, stop=stop, tx=tx, rx=rx)
 
-	def execute_command(self, command):
+	def execute_command(self, command,time_sleep=30):
 		self.uart.write(command)
-		time.sleep_ms(100)
+		time.sleep_ms(time_sleep)
 		if self.uart.any():
 			res = self.uart.read()
 			return res
@@ -445,6 +445,18 @@ class g4ngps:
 		res = self.execute_command('QACIOTE//')
 		aciete = { 'ign_on_tm': int(res[7:15], 16) }
 		return aciete
+	
+	def read_autocompleted_info(self):
+		aci={
+		'acivin': self.qacivin(),
+		'acivrn': self.qacivrn(),
+		'acikfa': self.qacikfa(),
+		'aciepd': self.qaciepd(),
+		'acioeo': self.qacioeo(),
+		'aciote': self.qaciote()
+		}
+		return aci
+	
 
 	# ALM subsys: alarm system
 	
@@ -586,6 +598,45 @@ class g4ngps:
 		alme2r = { 'ec2_evt_trp': (int(res[7:11], 16) & 0xffff) }
 		return alme2r
 
+	def read_alarm_local_net(self):
+		alm_local={
+			"almhst":self.qalmhst(),
+			'almovs':self.qalmovs(),
+			'almovb':self.qalmovb(),
+			'almatd':self.qalmatd(),
+			'almatt':self.qalmatt(),
+			'almdta':self.qalmdta(),
+			'almdlf':self.qalmdfl(),
+			'almelr':self.qalme1r(),
+			'alme1t':self.qalme1t(),
+			'alme2r':self.qalme2r(),
+			'alme2t':self.qalme2t(),
+			'almgmt':self.qalmgmt(),
+			'almssf':self.qalmssf(),
+			'almstf':self.qalmstf(),
+			'almssn':self.qalmssn()
+		}
+		return alm_local
+	
+	def read_alarm_roam_net(self):
+		alm_roam={
+			"almrst":self.qalmrst(),
+			'almovs':self.qalmovs(),
+			'almovb':self.qalmovb(),
+			'almatd':self.qalmatd(),
+			'almatt':self.qalmatt(),
+			'almdta':self.qalmdta(),
+			'almdlf':self.qalmdfl(),
+			'almelr':self.qalme1r(),
+			'alme1t':self.qalme1t(),
+			'alme2r':self.qalme2r(),
+			'alme2t':self.qalme2t(),
+			'almgmt':self.qalmgmt(),
+			'almssf':self.qalmssf(),
+			'almstf':self.qalmstf(),
+			'almssn':self.qalmssn()
+		}
+		return alm_roam
 	# TRS sybsystem: transmission
 	
 	# transmission in home network
@@ -637,37 +688,37 @@ class g4ngps:
 	# transmission threshold on accumulated data on home network [bytes]
 	def qtrshad(self):
 		res = self.execute_command('QTRSHAD//')
-		trshad = { 'h_data_th': ((int(res[7:11], 16) & 0xffff) / 1024) }
+		trshad = { 'h_data_th': ((int(res[7:11], 16)) / 1024) }
 		return trshad
 
 	# transmission threshold on accumulated data in roaming
 	def qtrsrad(self):
 		res = self.execute_command('QTRSRAD//')
-		trsrad = { 'r_data_th': ((int(res[7:11], 16) & 0xffff) / 1024) }
+		trsrad = { 'r_data_th': ((int(res[7:11], 16)) / 1024) }
 		return trsrad
 
 	# transmission interval a on home network
 	def qtrshia(self):
 		res = self.execute_command('QTRSHIA//')
-		trshia = { 'h_int_a': int(res[7:11], 16) & 0xffff }
+		trshia = { 'h_int_a': int(res[7:11], 16)}
 		return trshia
 
 	# transmission interval a in roaming
-	def qtrshia(self):
+	def qtrsria(self):
 		res = self.execute_command('QTRSRIA//')
-		trsria = { 'r_int_a': int(res[7:11], 16) & 0xffff }
+		trsria = { 'r_int_a': int(res[7:11], 16)}
 		return trsria
 
 	# transmission interval b on home network
 	def qtrshib(self):
 		res = self.execute_command('QTRSHIB//')
-		trsrib = { 'h_int_b': int(res[7:11], 16) & 0xffff }
+		trshib = { 'h_int_b': int(res[7:11], 16)}
 		return trshib
 
 	# transmission interval b roaming net
 	def qtrsrib(self):
 		res = self.execute_command('QTRSRIB//')
-		trsrib = { 'r_int_b': int(res[7:11], 16) & 0xffff }
+		trsrib = { 'r_int_b': int(res[7:11], 16)}
 		return trsrib
 
 	# transmission hours on home network
@@ -772,6 +823,38 @@ class g4ngps:
 		res = self.execute_command('QTRSRTD//')
 		trsrtd = { 'r_trs_dist': int(res[7:15], 16) / 1000 }
 		return trsrtd
+
+	def read_transmission_local(self):
+		trs_local={
+			'trshst':self.qtrshst(),
+			'trshia':self.qtrshia(),
+			'trshib':self.qtrshib(),
+			'trshmt':self.qtrshmt(),
+			'trshdl':self.qtrshdl(),
+			'trshdc':self.qtrshdc(),
+			'trshml':self.qtrshml(),
+			'trshmc':self.qtrshmc(),
+			'trstdr':self.qtrstdr(),
+			'trshdt':self.qtrshdt(),
+			'trshtd':self.qtrshtd(),
+		}	
+		return trs_local
+	
+	def read_transmission_roam(self):
+		trs_roam={
+			'trsrst':self.qtrsrst(),
+			'trsria':self.qtrsria(),
+			'trsrib':self.qtrsrib(),
+			'trsrmt':self.qtrsrmt(),
+			'trsrdl':self.qtrsrdl(),
+			'trsrdc':self.qtrsrdc(),
+			'trsrml':self.qtrsrml(),
+			'trsrmc':self.qtrsrmc(),
+			'trsrdr':self.qtrstdr(),
+			'trsrdt':self.qtrsrdt(),
+			'trsrtd':self.qtrsrtd(),
+		}	
+		return trs_roam
 
 	def ctrsreq(self):
 		res = self.execute_command('CTRSREQ//')
