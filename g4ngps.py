@@ -84,21 +84,21 @@ class g4ngps:
 		res = self.execute_command('QSYSLED//')
 		result_int = int(res[7:11], 16)
 		sysled = {
-			'led': res[7:-1],
-			'led_can': (result_int & 0x8000 != 0),
-			'led_wp': (result_int & 0x4000 != 0),
-			'led_ign': (result_int & 0x2000 != 0),
-			'led_alm': (result_int & 0x1000 != 0),
-			'led_staty_veh': (result_int & 0x0800 != 0),
-			'led_ext_tfc': (result_int & 0x0400 != 0),
-			'led_sim_sel': (result_int & 0x0200 != 0),
-			'led_ftp_ind': (result_int & 0x0100 != 0),
-			'led_acc_at': (result_int & 0x0080 != 0),
-			'led_acc_mov': (result_int & 0x0040 != 0),
-			'led_fuel_snsr': (result_int & 0x0020 != 0),
-			'led_eng_run': (result_int & 0x0010 != 0),
-			'led_ibu_auth': (result_int & 0x0008 != 0),
-			'led_data_mode': (result_int & 0x0004 != 0)
+			'led': res[7:11],
+			'led_can': (result_int & 0x8000) >> 15 != 0,
+			'led_wp': (result_int & 0x4000) >> 14 != 0,
+			'led_ign': (result_int & 0x2000) >> 13 != 0,
+			'led_alm': (result_int & 0x1000) >> 12 != 0,
+			'led_staty_veh': (result_int & 0x0800) >> 11 != 0,
+			'led_ext_tfc': (result_int & 0x0400) >> 10 != 0,
+			'led_sim_sel': (result_int & 0x0200) >> 9 != 0,
+			'led_ftp_ind': (result_int & 0x0100) >> 8 != 0,
+			'led_acc_at': (result_int & 0x0080) >> 7 != 0,
+			'led_acc_mov': (result_int & 0x0040) >> 6 != 0,
+			'led_fuel_snsr': (result_int & 0x0020) >> 5 != 0,
+			'led_eng_run': (result_int & 0x0010) >> 4 != 0,
+			'led_ibu_auth': (result_int & 0x0008) >> 3 != 0,
+			'led_data_mode': (result_int & 0x0004) >> 2 != 0
 		}
 		return sysled
 
@@ -113,10 +113,10 @@ class g4ngps:
 			result_int = int(res[7:15], 16)
 			## TODO: recheck these flags
 			sysset = {
-				'ers_upg_req': (result_int & 0x80000000 != 0),
-				'trs_sys_chg': (result_int & 0x40000000 == 0),
-				'chg_upg_srv': (result_int & 0x20000000 == 0),
-				'chg_cnf_srv': (result_int & 0x10000000 != 0)
+				'ers_upg_req': (result_int & 0x80000000) >> 31 != 0,
+				'trs_sys_chg': (result_int & 0x40000000) >> 30 == 0,
+				'chg_upg_srv': (result_int & 0x20000000) >> 29 == 0,
+				'chg_cnf_srv': (result_int & 0x10000000) >> 28 != 0
 			}
 			return sysset
 
@@ -147,18 +147,18 @@ class g4ngps:
 		res = self.execute_command('QSYSSYM//')
 		result_int = int(res[7:11], 16)
 		syssym = {
-			'wrk_pvt_actv': (result_int & 0x8000 == 0),
-			'trg_io': (result_int & 0x4000 != 0),
-			'trg_io_neg': (result_int & 0x2000 != 0),
-			'trg_cal': (result_int & 0x1000 != 0),
-			'no_acq_pvt': (result_int & 0x0800 != 0),
-			'no_trs_pvt': (result_int & 0x0400 != 0),
-			'no_alm_pvt': (result_int & 0x0200 != 0),
-			'use_res_days': (result_int & 0x0100 != 0),
-			'pvt_ena_rly': (result_int & 0x0080 != 0),
-			'pvt_dis_rly': (result_int & 0x0040 != 0),
-			'wrk_ena_rly': (result_int & 0x0020 != 0),
-			'wrk_dis_rly': (result_int & 0x0010 != 0)
+			'wrk_pvt_actv': (result_int & 0x8000) >> 15 == 0,
+			'trg_io': (result_int & 0x4000) >> 14 != 0,
+			'trg_io_neg': (result_int & 0x2000) >> 13 != 0,
+			'trg_cal': (result_int & 0x1000) >> 12 != 0,
+			'no_acq_pvt': (result_int & 0x0800) >> 11 != 0,
+			'no_trs_pvt': (result_int & 0x0400) >> 10 != 0,
+			'no_alm_pvt': (result_int & 0x0200) >> 9 != 0,
+			'use_res_days': (result_int & 0x0100) >> 8 != 0,
+			'pvt_ena_rly': (result_int & 0x0080) >> 7 != 0,
+			'pvt_dis_rly': (result_int & 0x0040) >> 6 != 0,
+			'wrk_ena_rly': (result_int & 0x0020) >> 5 != 0,
+			'wrk_dis_rly': (result_int & 0x0010) >> 4 != 0
 		}
 		return syssym
 
@@ -203,11 +203,11 @@ class g4ngps:
 		res = self.execute_command('QSYSPMG//')
 		result_int = int(res[7:15], 16)
 		syspmg = {
-			'pmg_ena': (result_int & 0x80000000 == 0),
-			'pmg_leds_off': (result_int & 0x40000000 != 0),
-			'pdn_mode_lvl': (result_int & 0x20000000 != 0),
-			'pdn_led_ind': (result_int & 0x10000000 != 0),
-			'acc_chg_pdn': (result_int & 0x08000000 != 0),
+			'pmg_ena': (result_int & 0x80000000) >> 31 == 0,
+			'pmg_leds_off': (result_int & 0x40000000) >> 30 != 0,
+			'pdn_mode_lvl': (result_int & 0x20000000) >> 29 != 0,
+			'pdn_led_ind': (result_int & 0x10000000) >> 28 != 0,
+			'acc_chg_pdn': (result_int & 0x08000000) >> 27 != 0,
 		}
 		return syspmg
 
@@ -216,26 +216,26 @@ class g4ngps:
 		res = self.execute_command('QSYSWKU//')
 		result_int = int(res[7:15], 16)
 		syswku = {
-			'wku_ena': (result_int & 0x80000000 == 0),
-			'wku_ov': (result_int & 0x40000000 != 0),
-			'wku_hr_mtch': (result_int & 0x20000000 != 0),
-			'wku_cal': (result_int & 0x10000000 != 0),
-			'wku_acq': (result_int & 0x08000000 != 0),
-			'wku_tx': (result_int & 0x04000000 != 0),
-			'wku_back_btn': (result_int & 0x02000000 != 0),
-			'wku_ms': (result_int & 0x01000000 != 0),
-			'wku_io1_ov': (result_int & 0x00800000 != 0),
-			'wku_io2_ov': (result_int & 0x00400000 != 0),
-			'wku_io3_ov': (result_int & 0x00200000 != 0),
-			'wku_io4_ov': (result_int & 0x00100000 != 0),
-			'wku_io1_uv': (result_int & 0x00080000 != 0),
-			'wku_io2_uv': (result_int & 0x00040000 != 0),
-			'wku_io3_uv': (result_int & 0x00020000 != 0),
-			'wku_io4_uv': (result_int & 0x00010000 != 0),
-			'wku_ign_on': (result_int & 0x00008000 != 0),
-			'wku_ibu': (result_int & 0x00004000 != 0),
-			'wku_acc_at': (result_int & 0x00002000 != 0),
-			'wku_acc_mov': (result_int & 0x00001000 != 0)
+			'wku_ena': (result_int & 0x8000000) >> 31 == 0,
+			'wku_ov': (result_int & 0x40000000) >> 30 != 0,
+			'wku_hr_mtch': (result_int & 0x20000000) >> 29 != 0,
+			'wku_cal': (result_int & 0x10000000) >> 28 != 0,
+			'wku_acq': (result_int & 0x08000000) >> 27 != 0,
+			'wku_tx': (result_int & 0x04000000) >> 26 != 0,
+			'wku_back_btn': (result_int & 0x02000000) >> 25 != 0,
+			'wku_ms': (result_int & 0x01000000) >> 24 != 0,
+			'wku_io1_ov': (result_int & 0x00800000) >> 23 != 0,
+			'wku_io2_ov': (result_int & 0x00400000) >> 22 != 0,
+			'wku_io3_ov': (result_int & 0x00200000) >> 21 != 0,
+			'wku_io4_ov': (result_int & 0x00100000) >> 20 != 0,
+			'wku_io1_uv': (result_int & 0x00080000) >> 19 != 0,
+			'wku_io2_uv': (result_int & 0x00040000) >> 18 != 0,
+			'wku_io3_uv': (result_int & 0x00020000) >> 17 != 0,
+			'wku_io4_uv': (result_int & 0x00010000) >> 16 != 0,
+			'wku_ign_on': (result_int & 0x00008000) >> 15 != 0,
+			'wku_ibu': (result_int & 0x00004000) >> 14 != 0,
+			'wku_acc_at': (result_int & 0x00002000) >> 13 != 0,
+			'wku_acc_mov': (result_int & 0x00001000) >> 12 != 0
 		}
 		return syswku
 
@@ -275,20 +275,20 @@ class g4ngps:
 		sby_res = int(res[7:15], 16)
 		zzz_res = int(res[15:23], 16)
 		syspmf = {
-			'sby_pwr_uv': (sby_res & 0x40000000 != 0),
-			'sby_hrs': (sby_res & 0x20000000 != 0),
-			'sby_idle': (sby_res & 0x10000000 != 0),
-			'sby_acq': (sby_res & 0x08000000 != 0),
-			'sby_trs': (sby_res & 0x04000000 != 0),
-			'sby_cal': (sby_res & 0x02000000 != 0),
-			'sby_ign_off': (sby_res & 0x01000000 != 0),
-			'zzz_pwr_uv': (zzz_res & 0x40000000 != 0),
-			'zzz_hrs': (zzz_res & 0x20000000 != 0),
-			'zzz_idle': (zzz_res & 0x10000000 != 0),
-			'zzz_acq': (zzz_res & 0x08000000 != 0),
-			'zzz_trs': (zzz_res & 0x04000000 != 0),
-			'zzz_cal': (zzz_res & 0x02000000 != 0),
-			'zzz_ign_off': (zzz_res & 0x01000000 != 0)
+			'sby_pwr_uv': (sby_res & 0x40000000) >> 30 != 0,
+			'sby_hrs': (sby_res & 0x20000000) >> 29 != 0,
+			'sby_idle': (sby_res & 0x10000000) >> 28 != 0,
+			'sby_acq': (sby_res & 0x08000000) >> 27 != 0,
+			'sby_trs': (sby_res & 0x04000000) >> 26 != 0,
+			'sby_cal': (sby_res & 0x02000000) >> 25 != 0,
+			'sby_ign_off': (sby_res & 0x01000000) >> 24 != 0,
+			'zzz_pwr_uv': (zzz_res & 0x40000000) >> 30 != 0,
+			'zzz_hrs': (zzz_res & 0x20000000) >> 29 != 0,
+			'zzz_idle': (zzz_res & 0x10000000) >> 28 != 0,
+			'zzz_acq': (zzz_res & 0x08000000) >> 27 != 0,
+			'zzz_trs': (zzz_res & 0x04000000) >> 26 != 0,
+			'zzz_cal': (zzz_res & 0x02000000) >> 25 != 0,
+			'zzz_ign_off': (zzz_res & 0x01000000) >> 24 != 0
 		}
 		return syspmf
 
@@ -298,28 +298,28 @@ class g4ngps:
 		fp_res = int(res[7:15], 16)
 		zzz_res = int(res[15:23], 16)
 		syspmy = {
-			'fp_pwr_uv': (fp_res & 0x40000000 != 0),
-			'fp_hrs': (fp_res & 0x20000000 != 0),
-			'fp_cal': (fp_res & 0x10000000 != 0),
-			'fp_acq': (fp_res & 0x08000000 != 0),
-			'fp_trs': (fp_res & 0x04000000 != 0),
-			'fp_ms': (fp_res & 0x01000000 != 0),
-			'fp_ov_ain1': (fp_res & 0x00800000 != 0),
-			'fp_ov_ain2': (fp_res & 0x00400000 != 0),
-			'fp_ov_ain3': (fp_res & 0x00200000 != 0),
-			'fp_uv_ain1': (fp_res & 0x00080000 != 0),
-			'fp_uv_ain2': (fp_res & 0x00040000 != 0),
-			'fp_uv_ain3': (fp_res & 0x00020000 != 0),
-			'fp_ign_on': (fp_res & 0x00008000 != 0),
-			'fp_ibu': (fp_res & 0x00004000 != 0),
-			'fp_acc_at': (fp_res & 0x00002000 != 0),
-			'fp_acc_mov': (fp_res & 0x00001000 != 0),
-			'fp_gnd_din4': (fp_res & 0x00000800 != 0),
-			'fp_gnd_din5': (fp_res & 0x00000400 != 0),
-			'fp_gnd_din6': (fp_res & 0x00000200 != 0),
-			'zzz_pwr_uv': (zzz_res & 0x40000000 != 0),
-			'zzz_dla': (zzz_res & 0x10000000 != 0),
-			'zzz_ign_off': (zzz_res & 0x08000000 != 0)
+			'fp_pwr_uv': (fp_res & 0x40000000) >> 30 != 0,
+			'fp_hrs': (fp_res & 0x20000000) >> 29 != 0,
+			'fp_cal': (fp_res & 0x10000000) >> 28 != 0,
+			'fp_acq': (fp_res & 0x08000000) >> 27 != 0,
+			'fp_trs': (fp_res & 0x04000000) >> 26 != 0,
+			'fp_ms': (fp_res & 0x01000000) >> 24 != 0,
+			'fp_ov_ain1': (fp_res & 0x00800000) >> 23 != 0,
+			'fp_ov_ain2': (fp_res & 0x00400000) >> 22 != 0,
+			'fp_ov_ain3': (fp_res & 0x00200000) >> 21 != 0,
+			'fp_uv_ain1': (fp_res & 0x00080000) >> 19 != 0,
+			'fp_uv_ain2': (fp_res & 0x00040000) >> 18 != 0,
+			'fp_uv_ain3': (fp_res & 0x00020000) >> 17 != 0,
+			'fp_ign_on': (fp_res & 0x00008000) >> 15 != 0,
+			'fp_ibu': (fp_res & 0x00004000) >> 14 != 0,
+			'fp_acc_at': (fp_res & 0x00002000) >> 13 != 0,
+			'fp_acc_mov': (fp_res & 0x00001000) >> 12 != 0,
+			'fp_gnd_din4': (fp_res & 0x00000800) >> 11 != 0,
+			'fp_gnd_din5': (fp_res & 0x00000400) >> 10 != 0,
+			'fp_gnd_din6': (fp_res & 0x00000200) >> 9 != 0,
+			'zzz_pwr_uv': (zzz_res & 0x40000000) >> 30 != 0,
+			'zzz_dla': (zzz_res & 0x10000000) >> 28 != 0,
+			'zzz_ign_off': (zzz_res & 0x08000000) >> 27 != 0
 		}
 		return syspmy
 
@@ -329,22 +329,22 @@ class g4ngps:
 		fp_res = int(res[7:15], 16)
 		sby_res = int(res[15:23], 16)
 		syspms = {
-			'fp_bat_low': (fp_res & 0x40000000 != 0),
-			'fp_dla': (fp_res & 0x20000000 != 0),
-			'fp_ign_on': (fp_res & 0x08000000 != 0),
-			'fp_ibu': (fp_res & 0x04000000 != 0),
-			'fp_min': (fp_res & 0x00800000 != 0),
-			'fp_hr': (fp_res & 0x00400000 != 0),
-			'fp_wdy': (fp_res & 0x00200000 != 0),
-			'fp_day': (fp_res & 0x00100000 != 0),
-			'sby_bat_low': (sby_res & 0x40000000 != 0),
-			'sby_dla': (sby_res & 0x20000000 != 0),
-			'sby_ign_on': (sby_res & 0x08000000 != 0),
-			'sby_ibu': (sby_res & 0x04000000 != 0),
-			'sby_min': (sby_res & 0x00800000 != 0),
-			'sby_hr': (sby_res & 0x00400000 != 0),
-			'sby_wdy': (sby_res & 0x00200000 != 0),
-			'sby_day': (sby_res & 0x00100000 != 0)
+			'fp_bat_low': (fp_res & 0x40000000) >> 30 != 0,
+			'fp_dla': (fp_res & 0x20000000) >> 29 != 0,
+			'fp_ign_on': (fp_res & 0x08000000) >> 27 != 0,
+			'fp_ibu': (fp_res & 0x04000000) >> 26 != 0,
+			'fp_min': (fp_res & 0x00800000) >> 23 != 0,
+			'fp_hr': (fp_res & 0x00400000) >> 22 != 0,
+			'fp_wdy': (fp_res & 0x00200000) >> 21 != 0,
+			'fp_day': (fp_res & 0x00100000) >> 20 != 0,
+			'sby_bat_low': (sby_res & 0x40000000) >> 30 != 0,
+			'sby_dla': (sby_res & 0x20000000) >> 29 != 0,
+			'sby_ign_on': (sby_res & 0x08000000) >> 27 != 0,
+			'sby_ibu': (sby_res & 0x04000000) >> 26 != 0,
+			'sby_min': (sby_res & 0x00800000) >> 23 != 0,
+			'sby_hr': (sby_res & 0x00400000) >> 22 != 0,
+			'sby_wdy': (sby_res & 0x00200000) >> 21 != 0,
+			'sby_day': (sby_res & 0x00100000) >> 20 != 0
 		}
 		return syspms
 
@@ -475,36 +475,36 @@ class g4ngps:
 	# decode alarm dict
 	def qalm_st(self, av):
 		return {
-			'alm_ena': (av & 0x80000000 == 0),
-			'ovs': (av & 0x40000000 != 0),
-			'ign': (av & 0x20000000 != 0),
-			'panic_btn': (av & 0x10000000 != 0),
-			'rly': (av & 0x08000000 != 0),
-			'inp_pwr_uv': (av & 0x04000000 != 0),
-			'inp_pwr_ov': (av & 0x02000000 != 0),
-			'accu_uv': (av & 0x01000000 != 0),
-			'accu_err': (av & 0x00800000 != 0),
-			'rly_dc': (av & 0x00400000 != 0),
-			'ibu_dc': (av & 0x00200000 != 0),
-			'ibu_sp': (av & 0x00100000 != 0),
-			'ibu_grp': (av & 0x00080000 != 0),
-			'dlog_lim': (av & 0x00040000 != 0),
-			'dly_tfc_exc': (av & 0x00020000 != 0),
-			'mth_tfc_exc': (av & 0x00010000 != 0),
-			'no_gps_sig': (av & 0x00008000 != 0),
-			'staty_ign_on': (av & 0x00004000 != 0),
-			'staty_ign_off': (av & 0x00002000 != 0),
-			'mvmt_ign_off': (av & 0x00001000 != 0),
-			'can': (av & 0x00000800 != 0),
-			'mvmt_ms': (av & 0x00000400 != 0),
-			'ibu_auth': (av & 0x00000200 != 0),
-			'pvt_mode': (av & 0x00000100 != 0),
-			'gar_pnd_dc': (av & 0x00000080 != 0),
-			'gps_jam': (av & 0x00000040 != 0),
-			'gsm_jam': (av & 0x00000020 != 0),
-			'fuel': (av & 0x00000020 != 0),
-			'acc_at': (av & 0x00000008 != 0),
-			'dwntm': (av & 0x00000004 != 0)
+			'alm_ena': (av & 0x80000000) >> 31 == 0,
+			'ovs': (av & 0x40000000) >> 30 != 0,
+			'ign': (av & 0x20000000) >> 29 != 0,
+			'panic_btn': (av & 0x10000000) >> 28 != 0,
+			'rly': (av & 0x08000000) >> 27 != 0,
+			'inp_pwr_uv': (av & 0x04000000) >> 26 != 0,
+			'inp_pwr_ov': (av & 0x02000000) >> 25 != 0,
+			'accu_uv': (av & 0x01000000) >> 24 != 0,
+			'accu_err': (av & 0x00800000) >> 23 != 0,
+			'rly_dc': (av & 0x00400000) >> 22 != 0,
+			'ibu_dc': (av & 0x00200000) >> 21 != 0,
+			'ibu_sp': (av & 0x00100000) >> 20 != 0,
+			'ibu_grp': (av & 0x00080000) >> 19 != 0,
+			'dlog_lim': (av & 0x00040000) >> 18 != 0,
+			'dly_tfc_exc': (av & 0x00020000) >> 17 != 0,
+			'mth_tfc_exc': (av & 0x00010000) >> 16 != 0,
+			'no_gps_sig': (av & 0x00008000) >> 15 != 0,
+			'staty_ign_on': (av & 0x00004000) >> 14 != 0,
+			'staty_ign_off': (av & 0x00002000) >> 13 != 0,
+			'mvmt_ign_off': (av & 0x00001000) >> 12 != 0,
+			'can': (av & 0x00000800) >> 11 != 0,
+			'mvmt_ms': (av & 0x00000400) >> 10 != 0,
+			'ibu_auth': (av & 0x00000200) >> 9 != 0,
+			'pvt_mode': (av & 0x00000100) >> 8 != 0,
+			'gar_pnd_dc': (av & 0x00000080) >> 7 != 0,
+			'gps_jam': (av & 0x00000040) >> 6 != 0,
+			'gsm_jam': (av & 0x00000020) >> 5 != 0,
+			'fuel': (av & 0x00000020) >> 4 != 0,
+			'acc_at': (av & 0x00000008) >> 3 != 0,
+			'dwntm': (av & 0x00000004) >> 2 != 0
 		}
 
 	# overspeed alarm speed threshold [km/h*10]
@@ -514,7 +514,7 @@ class g4ngps:
 		return almovs
 
 	# movement motion sensor alarm treshold [km/h*10]
-	def qalmovs(self):
+	def qalmmov(self):
 		res = self.execute_command('QALMMOV//')
 		almmov = {'mvmt_ms_th': (int(res[7:11], 16) & 0xffff) / 10}
 		return almmov
@@ -663,34 +663,34 @@ class g4ngps:
 	# decode transmission dict
 	def __qtrs_st(self, tv):
 		return {
-			'trs_ena': (tv & 0x80000000 == 0),
-			'int_a': (tv & 0x40000000 != 0),
-			'int_a_ign_on': (tv & 0x20000000 != 0),
-			'int_a_ign_off': (tv & 0x10000000 != 0),
-			'int_a_alm': (tv & 0x08000000 != 0),
-			'int_b': (tv & 0x04000000 != 0),
-			'int_b_ign_on': (tv & 0x02000000 != 0),
-			'int_b_ign_off': (tv & 0x01000000 != 0),
-			'int_b_alm': (tv & 0x00800000 != 0),
-			'alm': (tv & 0x00400000 != 0),
-			'data_th': (tv & 0x00200000 != 0),
-			'ign': (tv & 0x00100000 != 0),
-			'hrs_mtch': (tv & 0x00080000 != 0),
-			'ibu': (tv & 0x00040000 != 0),
-			'dly_tfc_ex': (tv & 0x00020000 != 0),
-			'mth_tfc_ex': (tv & 0x00010000 != 0),
-			'no_gps': (tv & 0x00008000 != 0),
-			'pwr_on': (tv & 0x00004000 != 0),
-			'trs_dla': (tv & 0x00002000 != 0),
-			'trs_clr_su': (tv & 0x00001000 != 0),
-			'wrk_pvt': (tv & 0x00000800 != 0),
-			'ep_int_a_ign_on': (tv & 0x00000400 != 0),
-			'ep_int_a_ign_off': (tv & 0x00000200 != 0),
-			'ep_int_b_ign_on': (tv & 0x00000100 != 0),
-			'ep_int_b_ign_off': (tv & 0x00000080 != 0),
-			'dist_th': (tv & 0x00000040 != 0),
-			'acq_trg': (tv & 0x00000020 != 0),
-			'no_rtc': (tv & 0x00000010 != 0)
+			'trs_ena': (tv & 0x80000000) >> 31 == 0,
+			'int_a': (tv & 0x40000000) >> 30 != 0,
+			'int_a_ign_on': (tv & 0x20000000) >> 29 != 0,
+			'int_a_ign_off': (tv & 0x10000000) >> 28 != 0,
+			'int_a_alm': (tv & 0x08000000) >> 27 != 0,
+			'int_b': (tv & 0x04000000) >> 26 != 0,
+			'int_b_ign_on': (tv & 0x02000000) >> 25 != 0,
+			'int_b_ign_off': (tv & 0x01000000) >> 24 != 0,
+			'int_b_alm': (tv & 0x00800000) >> 23 != 0,
+			'alm': (tv & 0x00400000) >> 22 != 0,
+			'data_th': (tv & 0x00200000) >> 21 != 0,
+			'ign': (tv & 0x00100000 >> 20) != 0,
+			'hrs_mtch': (tv & 0x00080000 >> 19) != 0,
+			'ibu': (tv & 0x00040000 >> 18) != 0,
+			'dly_tfc_ex': (tv & 0x00020000 >> 17) != 0,
+			'mth_tfc_ex': (tv & 0x00010000 >> 16) != 0,
+			'no_gps': (tv & 0x00008000 >> 15) != 0,
+			'pwr_on': (tv & 0x00004000 >> 14) != 0,
+			'trs_dla': (tv & 0x00002000 >> 13) != 0,
+			'trs_clr_su': (tv & 0x00001000 >> 12) != 0,
+			'wrk_pvt': (tv & 0x00000800 >> 11) != 0,
+			'ep_int_a_ign_on': (tv & 0x00000400 >> 10) != 0,
+			'ep_int_a_ign_off': (tv & 0x00000200 >> 9) != 0,
+			'ep_int_b_ign_on': (tv & 0x00000100 >> 8) != 0,
+			'ep_int_b_ign_off': (tv & 0x00000080 >> 7) != 0,
+			'dist_th': (tv & 0x00000040 >> 6) != 0,
+			'acq_trg': (tv & 0x00000020 >> 5) != 0,
+			'no_rtc': (tv & 0x00000010 >> 4) != 0
 		}
 
 	# transmission threshold on accumulated data on home network [bytes]
@@ -1235,14 +1235,14 @@ class g4ngps:
 		res = self.execute_command('QGPSSET//')
 		ri = int(res[7:11], 16)
 		gpsset = {
-			'pwr_save': (ri & 0x8000 != 0),
-			'sbas_ena': (ri & 0x4000 != 0),
-			'gps_upd': (ri & 0x2000 != 0),
-			'gps_fltr': (ri & 0x1000 == 0),
-			'trans_vld': (ri & 0x0800 == 0),
-			'acc_vld': (ri & 0x0400 == 0),
-			'inv_pos_pvt': (ri & 0x0200 != 0),
-			'vld_pos_prot ': (ri & 0x0100 != 0)
+			'pwr_save': (ri & 0x8000) >> 15 != 0,
+			'sbas_ena': (ri & 0x4000) >> 14 != 0,
+			'gps_upd': (ri & 0x2000) >> 13 != 0,
+			'gps_fltr': (ri & 0x1000) >> 12 == 0,
+			'trans_vld': (ri & 0x0800) >> 11 == 0,
+			'acc_vld': (ri & 0x0400) >> 10 == 0,
+			'inv_pos_pvt': (ri & 0x0200) >> 9 != 0,
+			'vld_pos_prot ': (ri & 0x0100) >> 8 != 0
 		}
 		return gpsset
 
@@ -1279,7 +1279,7 @@ class g4ngps:
 	# odometer and trip distance value
 	def qgpsdis(self):
 		res = self.execute_command('QGPSDIS//')
-		gpsdis = {'gps_dst': int(res[7:15], 16), 'gps_trp_dst': int(res[15:23])}
+		gpsdis = {'gps_dst': int(res[7:15], 16), 'gps_trp_dst': int(res[15:23], 16)}
 		return gpsdis
 
 	def qgpspdc(self):
@@ -1407,16 +1407,16 @@ class g4ngps:
 		ai = int(res[7:15], 16)
 		aj = int(res[15:23], 16)
 		dioacp = {
-			'acc_ena': (ai & 0x80000000 == 0),
-			'at_ena': (ai & 0x40000000 != 0),
-			'md_ena': (ai & 0x20000000 != 0),
-			'rly_act_alm': (ai & 0x00800000 != 0),
-			'rly_deact_alm': (ai & 0x00400000 != 0),
-			'rly_act_mvmt': (ai & 0x00200000 != 0),
-			'rly_deact_mvmt': (ai & 0x00100000 != 0),
-			'arm_ign_off': (ai & 0x00008000 != 0),
-			'disarm_ign_on': (aj & 0x80000000 != 0),
-			'disarm_ibu': (aj & 0x40000000 != 0),
+			'acc_ena': (ai & 0x80000000) >> 31 == 0,
+			'at_ena': (ai & 0x40000000) >> 30 != 0,
+			'md_ena': (ai & 0x20000000) >> 29 != 0,
+			'rly_act_alm': (ai & 0x00800000) >> 23 != 0,
+			'rly_deact_alm': (ai & 0x00400000) >> 22 != 0,
+			'rly_act_mvmt': (ai & 0x00200000) >> 21 != 0,
+			'rly_deact_mvmt': (ai & 0x00100000) >> 20 != 0,
+			'arm_ign_off': (ai & 0x00008000) >> 19 != 0,
+			'disarm_ign_on': (aj & 0x80000000 >> 31) != 0,
+			'disarm_ibu': (aj & 0x40000000 >> 30) != 0,
 		}
 		return dioacp
 
@@ -1652,15 +1652,15 @@ class g4ngps:
 		if len(res) == 8:
 			ci = int(res[7:11], 16)
 			diopco = {
-				'ign_ena': (ci & 0x8000) == 0,
-				'sog': (ci & 0x4000) != 0,
-				'ms': (ci & 0x2000) != 0,
-				'exp': (ci & 0x1000) != 0,
-				'acc_md': (ci & 0x800) != 0,
-				'pol': (ci & 0x400) != 0,
-				'no_ipt': (ci & 0x200) != 0,
-				'can': (ci & 0x100) != 0,
-				'tco': (ci & 0x80) != 0,
+				'ign_ena': (ci & 0x8000) >> 15 == 0,
+				'sog': (ci & 0x4000) >> 14 != 0,
+				'ms': (ci & 0x2000) >> 13 != 0,
+				'exp': (ci & 0x1000) >> 12 != 0,
+				'acc_md': (ci & 0x800) >> 11 != 0,
+				'pol': (ci & 0x400) >> 10 != 0,
+				'no_ipt': (ci & 0x200) >> 9 != 0,
+				'can': (ci & 0x100) >> 8 != 0,
+				'tco': (ci & 0x80) >> 7 != 0,
 			}
 			return diopco
 
@@ -1719,17 +1719,17 @@ class g4ngps:
 		if len(res[7:15]) == 8:
 			oi = int(res[7:11], 16)
 			diopal = {
-				'panic_ena': (oi & 0x8000) == 0,
-				'exp': (oi & 0x4000) != 0,
-				'pol': (oi & 0x2000) != 0,
-				'monost': (oi & 0x1000) != 0,
-				'rly_disa': (oi & 0x800) != 0,
-				'ign_on_disa': (oi & 0x400) != 0,
-				'ipt_fltr': (oi & 0x0200) != 0,
-				'rly_ena_on': (oi & 0x80) != 0,
-				'rly_ena_off': (oi & 0x40) != 0,
-				'rly_disa_on': (oi & 0x20) != 0,
-				'rly_disa_off': (oi & 0x10) != 0,
+				'panic_ena': (oi & 0x8000) >> 15 == 0,
+				'exp': (oi & 0x4000) >> 14 != 0,
+				'pol': (oi & 0x2000) >> 13 != 0,
+				'monost': (oi & 0x1000) >> 12 != 0,
+				'rly_disa': (oi & 0x800) >> 11 != 0,
+				'ign_on_disa': (oi & 0x400) >> 10 != 0,
+				'ipt_fltr': (oi & 0x0200) >> 9 != 0,
+				'rly_ena_on': (oi & 0x80) >> 7 != 0,
+				'rly_ena_off': (oi & 0x40) >> 6 != 0,
+				'rly_disa_on': (oi & 0x20) >> 5 != 0,
+				'rly_disa_off': (oi & 0x10) >> 4 != 0,
 			}
 			return diopal
 
@@ -1771,14 +1771,14 @@ class g4ngps:
 		if len(res[7:15]) == 8:
 			ri = int(res[7:11], 16)
 			dioprt = {
-				'rly_ena': ri & 0x8000 == 0,
-				'int_rly_ena': ri & 0x4000 == 0,
-				'pol': ri & 0x2000 != 0,
-				'monost': ri & 0x1000 != 0,
-				'rly_ena_ign_on': ri & 0x800 != 0,
-				'rly_ena_ign_off': ri & 0x200 != 0,
-				'rly_disa_ign_on': ri & 0x400 != 0,
-				'rly_disa_ign_on': ri & 0x100 != 0
+				'rly_ena': (ri & 0x8000) >> 15 == 0,
+				'int_rly_ena': (ri & 0x4000) >> 14 == 0,
+				'pol': (ri & 0x2000) >> 13 != 0,
+				'monost': (ri & 0x1000) >> 12 != 0,
+				'rly_ena_ign_on': (ri & 0x800) >> 11 != 0,
+				'rly_disa_ign_on': (ri & 0x400) >> 10 != 0,
+				'rly_ena_ign_off': (ri & 0x200) >> 9 != 0,
+				'rly_disa_ign_on': (ri & 0x100) >> 8 != 0
 			}
 			return dioprt
 
@@ -1821,12 +1821,12 @@ class g4ngps:
 		if len(res[7:15]) == 8:
 			ri = int(res[7:15], 16)
 			dioeco = {
-				'ec1_ena': (ri & 0x80000000) == 0,
-				'ec1_trg': (ri & 0x40000000) != 0,
-				'ec1_fltr': (ri & 0x20000000) != 0,
-				'ec2_ena': (ri & 0x8000) == 0,
-				'ec2_trg': (ri & 0x4000) != 0,
-				'ec2_fltr': (ri & 0x2000) != 0,
+				'ec1_ena': (ri & 0x80000000) >> 31 == 0,
+				'ec1_trg': (ri & 0x40000000) >> 30 != 0,
+				'ec1_fltr': (ri & 0x20000000) >> 29 != 0,
+				'ec2_ena': (ri & 0x8000) >> 15 == 0,
+				'ec2_trg': (ri & 0x4000) >> 14 != 0,
+				'ec2_fltr': (ri & 0x2000) >> 13 != 0,
 			}
 			return dioeco
 
@@ -1860,46 +1860,34 @@ class g4ngps:
 			dioe2l = {'ec2_lvl_th': int(fn) + round((fn - int(fn)) * 10) / 10}
 			return dioe2l
 
-	#read state counter 1 dio entity
-	def qdiosco1(self):
-		res = self.execute_command("QDIOSCO//")[7:-2]
-		res = int(res[0:4], 16)
-		diosco1 = {}
-		diosco1['set_io'] = None  #todo
-		diosco1['edge_trigg'] = res & 0x4000 != 0
-		return
+	# read state counter 1 dio entity
+	def qdiosco(self):
+		res = self.execute_command('QDIOSCO//')
+		if len(res[7:15]) == 8:
+			ri = int(res[7:15], 16)
+			diosco = {
+				'sc1_ena': (ri & 0x80000000) >> 31 == 0,
+				'sc1_trg': (ri & 0x40000000) >> 30 != 0,
+				'sc2_ena': (ri & 0x8000) >> 15 == 0,
+				'sc2_trg': (ri & 0x4000) >> 14 != 0,
+			}
+			return diosco
 
+	# read state counter 1 level threshold
 	def qdios1l(self):
-		res = int(self.execute_command("QDIOS1L//")[7:-2], 16)
-		f = res * 7.08722 / 1000
-		f = int(f) + round((f - int(f)) * 10) / 10
-		dios1l = {'level_thresh': f}
-		return dios1l
+		res = self.execute_command('QDIOS1L//')
+		if len(res[7:11]) == 4:
+			fn = int(res[7:11], 16) * 7.08722 / 1000
+			dios1l = {'sc1_lvl_th':int(fn) + round((fn - int(fn)) * 10) / 10}
+			return dios1l
 
-	def read_state_count1(self):
-		state_count1 = {'diosco1': self.qdiosco1(), 'dios1l': self.qdios1l()}
-		return state_count1
-
-	#read state counter2 dio entity
-	def qdiosco2(self):
-		res = self.execute_command('QDIOSCO//')[7:-2]
-		res = int(res[0:4], 16)
-		state_count2 = {
-			'set_io': None,  #todo
-			'edge_trig': res & 0x4000 != 0
-		}
-		return state_count2
-
+	# read state counter 2 level threshold
 	def qdios2l(self):
-		res = int(self.execute_command("QDIOS2L//")[7:-2], 16)
-		f = res * 7.08722 / 1000
-		f = int(f) + round((f - int(f)) * 10) / 10
-		dios2l = {'level_thresh': f}
-		return dios2l
-
-	def read_state_count2(self):
-		state_count2 = {'diosco2': self.qdiosco2(), 'dios2l': self.qdios2l()}
-		return state_count2
+		res = self.execute_command('QDIOS2L//')
+		if len(res[7:11]) == 4:
+			fn = int(res[7:11], 16) * 7.08722 / 1000
+			dios2l = {'sc2_lvl_th':int(fn) + round((fn - int(fn)) * 10) / 10}
+			return dios2l
 
 	#read event generator2
 	def qdioego1(self):

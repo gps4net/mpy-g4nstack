@@ -3,7 +3,7 @@ MicroPython library for G4N devices
 
 Load the library onto your G4N01ARD device preflashed with MicroPython.
 
-`$ mpremote <port> run esp32-g4ngps.py`
+`$ mpremote <port> run g4ngps.py`
 
 For a production setup, compile it with mpy-cross and copy it to :lib:
 
